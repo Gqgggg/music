@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Advanced Music Player with Search</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    max-width: 480px;
+    margin: auto;
+    user-select: none;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  #dropArea {
+    border: 2px dashed #555;
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    margin-bottom: 15px;
+    text-align: center;
+    cursor: pointer;
+    color: #999;
+  }
+  #dropArea.dragover {
+    border-color: #aaa;
+    color: #eee;
+  }
+  #fileInput {
+    display: none;
+  }
+  #searchInput {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #222;
+    color: #eee;
+  }
+  #playlist {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #444;
+    margin-bottom: 10px;
+    background: #222;
+    border-radius: 6px;
+  }
+  #playlist li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+  }
+  #playlist li:hover,
+  #playlist li.active {
+    background: #333;
+  }
+  #playlist img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  #playlist .meta {
+    flex-grow: 1;
+    overflow: hidden;
+  }
+  #playlist .title {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #playlist .artist {
+    font-size: 0.85em;
+    color: #bbb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+  }
+  button {
+    background: #333;
+    border: none;
+    color: #eee;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover {
+    background: #555;
+  }
+  button.active {
+    background: #666;
+  }
+  audio, iframe {
+    width: 100%;
+    border-radius: 6px;
+    outline: none;
+    margin-bottom: 10px;
+  }
+  #streamSection {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+  #streamInput {
+    width: 70%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #222;
+    color: #eee;
+    margin-right: 5px;
+  }
+  #streamPlayBtn {
+    padding: 9px 14px;
+    border-radius: 4px;
+    border: none;
+    background: #333;
+    color: #eee;
+    cursor: pointer;
+  }
+  #streamPlayBtn:hover {
+    background: #555;
+  }
+</style>
+</head>
+<body>
+
+<h1>Advanced Music Player</h1>
+
+<div id="dropArea">Drag & Drop Audio Files Here or Click to Select</div>
+<input type="file" id="fileInput" multiple accept="audio/*" />
+
+<input type="text" id="searchInput" placeholder="Search songs or artists..." />
+
+<ul id="playlist"></ul>
+
+<div id="controls">
+  <button id="prevBtn">Previous</button>
+  <button id="playPauseBtn">Play</button>
+  <button id="nextBtn">Next</button>
+  <button id="shuffleBtn" title="Shuffle">Shuffle Off</button>
+  <button id="repeatBtn" title="Repeat">Repeat Off</button>
+</div>
+
+<audio id="audioPlayer" controls></audio>
+
+<div id="streamSection">
+  <input type="text" id="streamInput" placeholder="Enter YouTube video URL or stream URL" />
+  <button id="streamPlayBtn">Play Stream</button>
+</div>
+
+<div id="youtubePlayer" style="display:none;">
+  <iframe id="ytIframe" width="100%" height="200" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <button id="stopStreamBtn" style="margin-top: 5px; width: 100%; padding: 10px; background: #b22222; border: none; color: white; border-radius: 6px; cursor: pointer;">Stop Stream</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsmediatags@3.9.5/dist/jsmediatags.min.js"></script>
+<script>
+  const dropArea = document.getElementById('dropArea');
+  const fileInput = document.getElementById('fileInput');
+  const searchInput = document.getElementById('searchInput');
+  const playlist = document.getElementById('playlist');
+  const audioPlayer = document.getElementById('audioPlayer');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const repeatBtn = document.getElementById('repeatBtn');
+  const streamInput = document.getElementById('streamInput');
+  const streamPlayBtn = document.getElementById('streamPlayBtn');
+  const youtubePlayerDiv = document.getElementById('youtubePlayer');
+  const ytIframe = document.getElementById('ytIframe');
+  const stopStreamBtn = document.getElementById('stopStreamBtn');
+
+  let tracks = [];
+  let currentTrackIndex = 0;
+  let isPlaying = false;
+  let isShuffle = false;
+  let repeatMode = 0; // 0 = off, 1 = repeat one, 2 = repeat all
+  let streamPlaying = false;
+
+  // Load playlist from localStorage
+  function loadPlaylist() {
+    const saved = localStorage.getItem('musicPlayerPlaylist');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (Array.isArray(data)) {
+          tracks = data.map(t => ({
+            name: t.name,
+            artist: t.artist,
+            title: t.title,
+            file: null,
+            url: t.url,
+            picture: t.picture || null
+          }));
+          currentTrackIndex = 0;
+          renderPlaylist();
+        }
+      } catch (e) {
+        console.error("Error parsing saved playlist:", e);
+      }
+    }
+  }
+
+  // Save playlist to localStorage (only URLs and metadata)
+  function savePlaylist() {
+    const dataToSave = tracks.map(t => ({
+      name: t.name,
+      artist: t.artist,
+      title: t.title,
+      url: t.url,
+      picture: t.picture || null
+    }));
+    localStorage.setItem('musicPlayerPlaylist', JSON.stringify(dataToSave));
+  }
+
+  // Add files with metadata reading
+  async function addFiles(files) {
+    for (const file of files) {
+      await readMetadata(file);
+    }
+    savePlaylist();
+    if (!streamPlaying && tracks.length === files.length) {
+      playTrack(0);
+    }
+  }
+
+  // Read metadata and add track
+  function readMetadata(file) {
+    return new Promise((resolve) => {
+      jsmediatags.read(file, {
+        onSuccess: function(tag) {
+          const tags = tag.tags;
+          const title = tags.title || file.name;
+          const artist = tags.artist || 'Unknown Artist';
+
+          let picture = null;
+          if (tags.picture) {
+            const data = tags.picture.data;
+            const format = tags.picture.format;
+            let base64String = "";
+            for (let i = 0; i < data.length; i++) {
+              base64String += String.fromCharCode(data[i]);
+            }
+            picture = `data:${format};base64,${btoa(base64String)}`;
+          }
+          const url = URL.createObjectURL(file);
+
+          tracks.push({file, name: file.name, title, artist, url, picture});
+          renderPlaylist();
+          resolve();
+        },
+        onError: function() {
+          const url = URL.createObjectURL(file);
+          tracks.push({file, name: file.name, title: file.name, artist: 'Unknown Artist', url, picture: null});
+          renderPlaylist();
+          resolve();
+        }
+      });
+    });
+  }
+
+  // Render playlist UI filtering by search
+  function renderPlaylist() {
+    playlist.innerHTML = "";
+    const filter = searchInput.value.toLowerCase();
+
+    tracks.forEach((track, idx) => {
+      const text = (track.title + " " + track.artist).toLowerCase();
+      if (!text.includes(filter)) return; // skip if doesn't match search
+
+      const li = document.createElement('li');
+      li.classList.toggle('active', idx === currentTrackIndex);
+      li.addEventListener('click', () => {
+        playTrack(idx);
+      });
+
+      if (track.picture) {
+        const img = document.createElement('img');
+        img.src = track.picture;
+        li.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.style.width = '40px';
+        placeholder.style.height = '40px';
+        placeholder.style.background = '#444';
+        placeholder.style.borderRadius = '4px';
+        li.appendChild(placeholder);
+      }
+
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'meta';
+
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'title';
+      titleDiv.textContent = track.title;
+
+      const artistDiv = document.createElement('div');
+      artistDiv.className = 'artist';
+      artistDiv.textContent = track.artist;
+
+      metaDiv.appendChild(titleDiv);
+      metaDiv.appendChild(artistDiv);
+      li.appendChild(metaDiv);
+
+      playlist.appendChild(li);
+    });
+  }
+
+  // Play selected track by index
+  function playTrack(index) {
+    if (index < 0 || index >= tracks.length) return;
+    currentTrackIndex = index;
+    const track = tracks[index];
+    streamPlaying = false;
+    stopStream();
+    audioPlayer.src = track.url;
+    audioPlayer.play();
+    isPlaying = true;
+    updatePlayPauseBtn();
+    renderPlaylist();
+  }
+
+  function playPause() {
+    if (streamPlaying) {
+      // Control YouTube iframe (not supported here), so just toggle audio element
+      return;
+    }
+    if (isPlaying) {
+      audioPlayer.pause();
+    } else {
+      audioPlayer.play();
+    }
+  }
+
+  function updatePlayPauseBtn() {
+    playPauseBtn.textContent = isPlaying ? 'Pause' : 'Play';
+  }
+
+  // Previous track logic
+  function playPrev() {
+    if (tracks.length === 0) return;
+    if (isShuffle) {
+      playTrack(Math.floor(Math.random() * tracks.length));
+    } else {
+      let newIndex = currentTrackIndex - 1;
+      if (newIndex < 0) newIndex = tracks.length - 1;
+      playTrack(newIndex);
+    }
+  }
+
+  // Next track logic
+  function playNext() {
+    if (tracks.length === 0) return;
+    if (isShuffle) {
+      playTrack(Math.floor(Math.random() * tracks.length));
+    } else {
+      let newIndex = currentTrackIndex + 1;
+      if (newIndex >= tracks.length) newIndex = 0;
+      playTrack(newIndex);
+    }
+  }
+
+  // Toggle shuffle
+  shuffleBtn.addEventListener('click', () => {
+    isShuffle = !isShuffle;
+    shuffleBtn.textContent = isShuffle ? 'Shuffle On' : 'Shuffle Off';
+    shuffleBtn.classList.toggle('active', isShuffle);
+  });
+
+  // Toggle repeat modes: off → one → all → off ...
+  repeatBtn.addEventListener('click', () => {
+    repeatMode = (repeatMode + 1) % 3;
+    if (repeatMode === 0) repeatBtn.textContent = 'Repeat Off';
+    else if (repeatMode === 1) repeatBtn.textContent = 'Repeat One';
+    else repeatBtn.textContent = 'Repeat All';
+    repeatBtn.classList.toggle('active', repeatMode !== 0);
+  });
+
+  // When track ends
+  audioPlayer.addEventListener('ended', () => {
+    if (repeatMode === 1) {
+      // Repeat one
+      audioPlayer.currentTime = 0;
+      audioPlayer.play();
+    } else if (repeatMode === 2) {
+      // Repeat all (next track or loop)
+      playNext();
+    } else {
+      // No repeat, just next track or stop
+      if (currentTrackIndex < tracks.length - 1) {
+        playNext();
+      } else {
+        isPlaying = false;
+        updatePlayPauseBtn();
+      }
+    }
+  });
+
+  // Update playPauseBtn on play/pause events
+  audioPlayer.addEventListener('play', () => {
+    isPlaying = true;
+    updatePlayPauseBtn();
+  });
+  audioPlayer.addEventListener('pause', () => {
+    isPlaying = false;
+    updatePlayPauseBtn();
+  });
+
+  // Drag & Drop handlers
+  dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.classList.add('dragover');
+  });
+  dropArea.addEventListener('dragleave', (e) => {
+    dropArea.classList.remove('dragover');
+  });
+  dropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropArea.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/'));
+    addFiles(files);
+  });
+  dropArea.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const files = Array.from(fileInput.files);
+    addFiles(files);
+  });
+
+  // Control buttons
+  playPauseBtn.addEventListener('click', playPause);
+  prevBtn.addEventListener('click', playPrev);
+  nextBtn.addEventListener('click', playNext);
+
+  // Search filter
+  searchInput.addEventListener('input', () => {
+    renderPlaylist();
+  });
+
+  // Stream from URL (YouTube or direct audio)
+  streamPlayBtn.addEventListener('click', () => {
+    const url = streamInput.value.trim();
+    if (!url) return alert("Please enter a URL to stream.");
+
+    // Try to extract YouTube video ID
+    const ytMatch = url.match(/(?:youtube\.com.*(?:\\?|&)v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (ytMatch) {
+      playYouTubeVideo(ytMatch[1]);
+    } else if (url.match(/^https?:\/\/.+\.(mp3|wav|ogg)$/)) {
+      playDirectStream(url);
+    } else {
+      alert("Unsupported stream URL or format.");
+    }
+  });
+
+  function playYouTubeVideo(videoId) {
+    streamPlaying = true;
+    audioPlayer.pause();
+    audioPlayer.src = '';
+    youtubePlayerDiv.style.display = 'block';
+    ytIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&rel=0`;
+  }
+
+  function playDirectStream(url) {
+    streamPlaying = true;
+    youtubePlayerDiv.style.display = 'none';
+    ytIframe.src = '';
+    audioPlayer.src = url;
+    audioPlayer.play();
+  }
+
+  function stopStream() {
+    if (streamPlaying) {
+      streamPlaying = false;
+      ytIframe.src = '';
+      youtubePlayerDiv.style.display = 'none';
+    }
+  }
+
+  stopStreamBtn.addEventListener('click', () => {
+    stopStream();
+  });
+
+  // Init
+  loadPlaylist();
+  if (tracks.length > 0) {
+    playTrack(0);
+  }
+
+</script>
+
+</body>
+</html>
