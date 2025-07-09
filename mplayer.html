@@ -11,6 +11,7 @@
     background: #121212;
     color: #eee;
     display: flex; flex-direction: column; height: 100vh;
+    transition: background 0.3s, color 0.3s;
   }
   header {
     padding: 1rem;
@@ -18,8 +19,10 @@
     display: flex; justify-content: space-between; align-items: center;
     flex-wrap: wrap;
   }
-  header > * {
-    margin: 0.5rem;
+  header > div {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
   }
   #drop-area {
     border: 2px dashed #444;
@@ -84,6 +87,7 @@
     font-weight: bold;
     cursor: pointer;
     user-select: none;
+    transition: background 0.3s;
   }
   button.active {
     background: #14833b;
@@ -94,7 +98,7 @@
     padding: 0.5rem;
     border-radius: 4px;
     border: none;
-    margin: 1rem;
+    margin: 0 1rem;
     background: #222;
     color: #eee;
   }
@@ -143,14 +147,47 @@
     border-radius: 4px;
     cursor: pointer;
   }
-  @media (max-width: 600px) {
-    #controls {
-      flex-wrap: wrap;
-    }
-    #stream-input {
-      width: 100%;
-      max-width: none;
-    }
+  #volume-control-container {
+    text-align: center;
+    margin: 0.5rem 0 1rem;
+  }
+  #volume-slider {
+    vertical-align: middle;
+    width: 200px;
+  }
+
+  /* Light theme */
+  body.light-theme {
+    background: #f3f3f3;
+    color: #111;
+  }
+  body.light-theme header {
+    background: #ddd;
+  }
+  body.light-theme #drop-area {
+    border-color: #aaa;
+    background: #fff;
+    color: #111;
+  }
+  body.light-theme #playlist {
+    background: #eaeaea;
+  }
+  body.light-theme #playlist li:hover {
+    background: #ccc;
+  }
+  body.light-theme #playlist li.active {
+    background: #1db954;
+    color: #000;
+  }
+  body.light-theme button {
+    background: #1db954;
+    color: #000;
+  }
+  body.light-theme #search,
+  body.light-theme #stream-input,
+  body.light-theme #lang-select {
+    background: #fff;
+    color: #000;
   }
 </style>
 </head>
@@ -164,11 +201,14 @@
     <button id="shuffle-btn">Shuffle Off</button>
     <button id="repeat-btn">Repeat Off</button>
   </div>
-  <input id="search" type="search" placeholder="Search songs..." aria-label="Search songs" />
-  <select id="lang-select" aria-label="Select language">
-    <option value="en" selected>English</option>
-    <option value="es">Español</option>
-  </select>
+  <div style="display: flex; gap: 1rem; align-items: center;">
+    <input id="search" type="search" placeholder="Search songs..." aria-label="Search songs" />
+    <select id="lang-select" aria-label="Select language">
+      <option value="en" selected>English</option>
+      <option value="es">Español</option>
+    </select>
+    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
+  </div>
 </header>
 
 <div id="drop-area" tabindex="0">Drag & Drop audio files here or click to select</div>
@@ -190,6 +230,11 @@
 </div>
 
 <canvas id="audio-visualizer" width="600" height="100"></canvas>
+
+<div id="volume-control-container">
+  <label for="volume-slider" style="margin-right: 0.5rem;">🔊 Volume</label>
+  <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume Control" />
+</div>
 
 <div style="text-align:center; margin: 1rem;">
   <button id="export-playlist-btn">Export Playlist</button>
@@ -231,25 +276,31 @@ const locales = {
     pause: "Pausa",
     prev: "Anterior",
     next: "Siguiente",
-    shuffleOff: "Aleatorio Desactivado",
-    shuffleOn: "Aleatorio Activado",
-    repeatOff: "Repetir Desactivado",
-    repeatOne: "Repetir Una",
-    repeatAll: "Repetir Todas",
+    shuffleOff: "Aleatorio Off",
+    shuffleOn: "Aleatorio On",
+    repeatOff: "Repetir Off",
+    repeatOne: "Repetir 1",
+    repeatAll: "Repetir Todo",
     exportPlaylist: "Exportar Lista",
     importPlaylist: "Importar Lista",
     unsupportedStream: "URL o formato no soportado.",
-    enterStreamUrl: "Por favor, introduce una URL para reproducir.",
+    enterStreamUrl: "Por favor introduce una URL para reproducir.",
     noTracks: "No hay canciones en la lista.",
   }
 };
 
-let lang = 'en';
+let currentLang = localStorage.getItem('amp-lang') || 'en';
 
+function t(key) {
+  return locales[currentLang][key] || key;
+}
+
+// UI elements
 const elements = {
   dropArea: document.getElementById('drop-area'),
   fileInput: document.getElementById('file-input'),
   playlist: document.getElementById('playlist'),
+  audioPlayer: document.getElementById('audio-player'),
   playPauseBtn: document.getElementById('play-pause-btn'),
   prevBtn: document.getElementById('prev-btn'),
   nextBtn: document.getElementById('next-btn'),
@@ -259,30 +310,30 @@ const elements = {
   streamInput: document.getElementById('stream-input'),
   streamPlayBtn: document.getElementById('stream-play-btn'),
   streamStopBtn: document.getElementById('stream-stop-btn'),
-  audioPlayer: document.getElementById('audio-player'),
-  youtubePlayerDiv: document.getElementById('youtube-player'),
+  youtubePlayer: document.getElementById('youtube-player'),
   ytIframe: document.getElementById('yt-iframe'),
   ytVideoTitle: document.getElementById('yt-video-title'),
   audioVisualizer: document.getElementById('audio-visualizer'),
+  volumeSlider: document.getElementById('volume-slider'),
+  langSelect: document.getElementById('lang-select'),
+  themeToggle: document.getElementById('theme-toggle'),
   exportPlaylistBtn: document.getElementById('export-playlist-btn'),
   importPlaylistBtn: document.getElementById('import-playlist-btn'),
   importFileInput: document.getElementById('import-file-input'),
-  langSelect: document.getElementById('lang-select'),
 };
 
-let tracks = [];
+elements.langSelect.value = currentLang;
+
+// State
+let playlist = [];
 let currentTrackIndex = -1;
 let isPlaying = false;
 let isShuffle = false;
 let repeatMode = 0; // 0=off,1=one,2=all
-let streamPlaying = false;
 let audioContext, analyser, sourceNode, animationId;
 
-function t(key) {
-  return locales[lang][key] || key;
-}
-
-function updateLocalization() {
+// Helpers
+function updateTextContent() {
   elements.dropArea.textContent = t('dragDrop');
   elements.searchInput.placeholder = t('searchPlaceholder');
   elements.streamInput.placeholder = t('streamPlaceholder');
@@ -298,332 +349,295 @@ function updateLocalization() {
   elements.importPlaylistBtn.textContent = t('importPlaylist');
 }
 
-function savePlaylist() {
-  localStorage.setItem('advanced-music-player-playlist', JSON.stringify(tracks));
-}
-
-function loadPlaylist() {
-  const saved = localStorage.getItem('advanced-music-player-playlist');
-  if (saved) {
-    try {
-      tracks = JSON.parse(saved);
-    } catch {
-      tracks = [];
-    }
-  }
-}
-
-function renderPlaylist() {
-  const searchTerm = elements.searchInput.value.trim().toLowerCase();
-  elements.playlist.innerHTML = '';
-  tracks.forEach((track, i) => {
-    if (
-      searchTerm &&
-      !(
-        track.title.toLowerCase().includes(searchTerm) ||
-        track.artist.toLowerCase().includes(searchTerm)
-      )
-    ) {
-      return;
-    }
-    const li = document.createElement('li');
-    li.classList.toggle('active', i === currentTrackIndex);
-    li.tabIndex = 0;
-
-    li.onclick = () => playTrack(i);
-    li.onkeypress = e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        playTrack(i);
-      }
-    };
-
-    if (track.albumArt) {
-      const img = document.createElement('img');
-      img.src = track.albumArt;
-      img.alt = track.title + " album art";
-      img.style.width = '40px';
-      img.style.height = '40px';
-      img.style.borderRadius = '4px';
-      li.appendChild(img);
-    } else {
-      const placeholder = document.createElement('div');
-      placeholder.style.width = '40px';
-      placeholder.style.height = '40px';
-      placeholder.style.background = '#444';
-      placeholder.style.borderRadius = '4px';
-      li.appendChild(placeholder);
-    }
-
-    const metaDiv = document.createElement('div');
-    metaDiv.className = 'meta';
-
-    const titleDiv = document.createElement('div');
-    titleDiv.className = 'title';
-    titleDiv.textContent = track.title;
-
-    const artistDiv = document.createElement('div');
-    artistDiv.className = 'artist';
-    artistDiv.textContent = track.artist;
-
-    metaDiv.appendChild(titleDiv);
-    metaDiv.appendChild(artistDiv);
-    li.appendChild(metaDiv);
-
-    elements.playlist.appendChild(li);
+function setActivePlaylistItem(index) {
+  const items = elements.playlist.querySelectorAll('li');
+  items.forEach((li, i) => {
+    li.classList.toggle('active', i === index);
   });
 }
 
-function addFiles(files) {
-  for (const file of files) {
-    const url = URL.createObjectURL(file);
-    const title = file.name.replace(/\.[^/.]+$/, "");
-    tracks.push({
-      url,
-      title,
-      artist: 'Unknown Artist',
-      albumArt: null,
-      localFile: true,
-    });
-  }
-  savePlaylist();
-  renderPlaylist();
-  if (currentTrackIndex === -1 && tracks.length > 0) {
-    playTrack(0);
+// Playlist rendering
+function renderPlaylist() {
+  const filter = elements.searchInput.value.toLowerCase();
+  elements.playlist.innerHTML = '';
+  playlist.forEach((track, i) => {
+    if (track.title.toLowerCase().includes(filter) || (track.artist && track.artist.toLowerCase().includes(filter))) {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.tabIndex = 0;
+      li.innerHTML = `<div class="meta"><div class="title">${track.title}</div><div class="artist">${track.artist || ''}</div></div>`;
+      if (i === currentTrackIndex) li.classList.add('active');
+      li.addEventListener('click', () => playTrack(i));
+      li.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          playTrack(i);
+        }
+      });
+      elements.playlist.appendChild(li);
+    }
+  });
+}
+
+// Load metadata from file
+function loadMetadata(file, callback) {
+  // Use FileReader and music-metadata-browser if available, else fallback
+  if (window.musicMetadata) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      musicMetadata.parseBlob(new Blob([evt.target.result])).then(metadata => {
+        callback(metadata.common.title || file.name, metadata.common.artist || '');
+      }).catch(() => {
+        callback(file.name, '');
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    callback(file.name, '');
   }
 }
 
+// Add files
+function addFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('audio/')) return;
+    loadMetadata(file, (title, artist) => {
+      const url = URL.createObjectURL(file);
+      playlist.push({ title, artist, url, file });
+      if (currentTrackIndex === -1) {
+        playTrack(0);
+      }
+      renderPlaylist();
+    });
+  });
+}
+
+// Play track by index
 function playTrack(index) {
-  if (index < 0 || index >= tracks.length) return;
+  if (index < 0 || index >= playlist.length) return;
   currentTrackIndex = index;
-  const track = tracks[index];
-  streamPlaying = false;
-  stopStream();
+  const track = playlist[index];
+  stopStream(); // Stop any streaming video
   elements.audioPlayer.src = track.url;
   elements.audioPlayer.play();
   isPlaying = true;
-  updatePlayPauseBtn();
-  renderPlaylist();
+  updateTextContent();
+  setActivePlaylistItem(index);
   setupVisualizer();
 }
 
+// Playback controls
 function playPause() {
-  if (streamPlaying) {
-    // Currently no iframe API control for YouTube/SoundCloud in this demo
-    // Could be extended using YouTube Player API or SoundCloud Widget API
-    return;
-  }
-  if (isPlaying) {
+  if (elements.audioPlayer.paused) {
+    elements.audioPlayer.play();
+  } else {
     elements.audioPlayer.pause();
-  } else {
-    elements.audioPlayer.play();
   }
 }
-
-function updatePlayPauseBtn() {
-  elements.playPauseBtn.textContent = isPlaying ? t('pause') : t('play');
-}
-
-function playPrev() {
-  if (tracks.length === 0) return;
-  if (isShuffle) {
-    playTrack(Math.floor(Math.random() * tracks.length));
-  } else {
-    let newIndex = currentTrackIndex - 1;
-    if (newIndex < 0) newIndex = tracks.length - 1;
-    playTrack(newIndex);
-  }
-}
-
 function playNext() {
-  if (tracks.length === 0) return;
+  if (playlist.length === 0) return;
   if (isShuffle) {
-    playTrack(Math.floor(Math.random() * tracks.length));
+    playTrack(Math.floor(Math.random() * playlist.length));
   } else {
-    let newIndex = currentTrackIndex + 1;
-    if (newIndex >= tracks.length) newIndex = 0;
-    playTrack(newIndex);
-  }
-}
-
-elements.shuffleBtn.addEventListener('click', () => {
-  isShuffle = !isShuffle;
-  elements.shuffleBtn.textContent = isShuffle ? t('shuffleOn') : t('shuffleOff');
-  elements.shuffleBtn.classList.toggle('active', isShuffle);
-});
-
-elements.repeatBtn.addEventListener('click', () => {
-  repeatMode = (repeatMode + 1) % 3;
-  const repeatTexts = [t('repeatOff'), t('repeatOne'), t('repeatAll')];
-  elements.repeatBtn.textContent = repeatTexts[repeatMode];
-  elements.repeatBtn.classList.toggle('active', repeatMode !== 0);
-});
-
-elements.audioPlayer.addEventListener('ended', () => {
-  if (repeatMode === 1) {
-    elements.audioPlayer.currentTime = 0;
-    elements.audioPlayer.play();
-  } else if (repeatMode === 2) {
-    playNext();
-  } else {
-    if (currentTrackIndex < tracks.length - 1) {
-      playNext();
+    if (repeatMode === 2) {
+      playTrack((currentTrackIndex + 1) % playlist.length);
     } else {
-      isPlaying = false;
-      updatePlayPauseBtn();
+      if (currentTrackIndex < playlist.length - 1) {
+        playTrack(currentTrackIndex + 1);
+      } else if (repeatMode === 2) {
+        playTrack(0);
+      }
     }
   }
+}
+function playPrev() {
+  if (playlist.length === 0) return;
+  if (isShuffle) {
+    playTrack(Math.floor(Math.random() * playlist.length));
+  } else {
+    if (currentTrackIndex > 0) {
+      playTrack(currentTrackIndex - 1);
+    } else if (repeatMode === 2) {
+      playTrack(playlist.length - 1);
+    }
+  }
+}
+
+// Shuffle and Repeat toggle
+elements.shuffleBtn.addEventListener('click', () => {
+  isShuffle = !isShuffle;
+  updateTextContent();
+});
+elements.repeatBtn.addEventListener('click', () => {
+  repeatMode = (repeatMode + 1) % 3;
+  updateTextContent();
 });
 
-elements.audioPlayer.addEventListener('play', () => {
-  isPlaying = true;
-  updatePlayPauseBtn();
-  setupVisualizer();
+// Volume control
+elements.volumeSlider.addEventListener('input', e => {
+  elements.audioPlayer.volume = e.target.value;
+});
+elements.audioPlayer.volume = elements.volumeSlider.value;
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+  switch (e.key.toLowerCase()) {
+    case ' ':
+      e.preventDefault();
+      playPause();
+      break;
+    case 'arrowright':
+      playNext();
+      break;
+    case 'arrowleft':
+      playPrev();
+      break;
+    case 's':
+      elements.shuffleBtn.click();
+      break;
+    case 'r':
+      elements.repeatBtn.click();
+      break;
+  }
 });
 
-elements.audioPlayer.addEventListener('pause', () => {
-  isPlaying = false;
-  updatePlayPauseBtn();
-  cancelAnimationFrame(animationId);
-  clearCanvas();
-});
+// Search filter
+elements.searchInput.addEventListener('input', renderPlaylist);
 
-elements.playPauseBtn.addEventListener('click', playPause);
-elements.prevBtn.addEventListener('click', playPrev);
-elements.nextBtn.addEventListener('click', playNext);
-
-elements.searchInput.addEventListener('input', () => {
-  renderPlaylist();
-});
-
+// Drag & Drop
+elements.dropArea.addEventListener('click', () => elements.fileInput.click());
 elements.dropArea.addEventListener('dragover', e => {
   e.preventDefault();
   elements.dropArea.classList.add('dragover');
 });
 elements.dropArea.addEventListener('dragleave', e => {
+  e.preventDefault();
   elements.dropArea.classList.remove('dragover');
 });
 elements.dropArea.addEventListener('drop', e => {
   e.preventDefault();
   elements.dropArea.classList.remove('dragover');
-  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/'));
-  addFiles(files);
+  addFiles(e.dataTransfer.files);
 });
-elements.dropArea.addEventListener('click', () => {
-  elements.fileInput.click();
-});
-elements.fileInput.addEventListener('change', () => {
-  addFiles(Array.from(elements.fileInput.files));
+elements.fileInput.addEventListener('change', e => {
+  addFiles(e.target.files);
 });
 
-// Streaming support: YouTube and SoundCloud
+// Stream playback (basic placeholder, only allows direct audio URLs for simplicity)
 elements.streamPlayBtn.addEventListener('click', () => {
   const url = elements.streamInput.value.trim();
   if (!url) {
     alert(t('enterStreamUrl'));
     return;
   }
-
-  // YouTube ID extraction
-  const ytMatch = url.match(/(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) {
-    playYouTubeVideo(ytMatch[1]);
-    return;
+  // Basic detection for YouTube and SoundCloud could be added here
+  // For now, just set audio src if it is audio file url
+  if (url.match(/\.(mp3|ogg|wav|m4a)(\?.*)?$/i)) {
+    stopStream();
+    elements.audioPlayer.src = url;
+    elements.audioPlayer.play();
+    elements.youtubePlayer.style.display = 'none';
+    isPlaying = true;
+    updateTextContent();
+  } else {
+    alert(t('unsupportedStream'));
   }
-  // SoundCloud URL (simple check)
-  if (/soundcloud\.com/.test(url)) {
-    playSoundCloud(url);
-    return;
-  }
-  alert(t('unsupportedStream'));
 });
-
-elements.streamStopBtn.addEventListener('click', () => {
-  stopStream();
-});
-
-function playYouTubeVideo(videoId) {
-  streamPlaying = true;
-  elements.audioPlayer.pause();
-  elements.audioPlayer.src = '';
-  elements.youtubePlayerDiv.style.display = 'block';
-  elements.ytIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&rel=0`;
-  fetchYouTubeVideoTitle(videoId);
-  cancelAnimationFrame(animationId);
-  clearCanvas();
-}
-
-function fetchYouTubeVideoTitle(videoId) {
-  // Use YouTube oEmbed API to get video info
-  fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
-    .then(res => res.json())
-    .then(data => {
-      elements.ytVideoTitle.textContent = data.title;
-    }).catch(() => {
-      elements.ytVideoTitle.textContent = '';
-    });
-}
-
-function playSoundCloud(url) {
-  streamPlaying = true;
-  elements.audioPlayer.pause();
-  elements.audioPlayer.src = '';
-  elements.youtubePlayerDiv.style.display = 'block';
-  // Embed SoundCloud player iframe
-  elements.ytIframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true`;
-  elements.ytVideoTitle.textContent = '';
-  cancelAnimationFrame(animationId);
-  clearCanvas();
-}
+elements.streamStopBtn.addEventListener('click', stopStream);
 
 function stopStream() {
-  if (!streamPlaying) return;
-  streamPlaying = false;
-  elements.youtubePlayerDiv.style.display = 'none';
+  elements.audioPlayer.pause();
+  elements.audioPlayer.src = '';
+  elements.youtubePlayer.style.display = 'none';
   elements.ytIframe.src = '';
   elements.ytVideoTitle.textContent = '';
-  if (currentTrackIndex >= 0 && tracks.length > 0) {
-    elements.audioPlayer.src = tracks[currentTrackIndex].url;
-    if (isPlaying) elements.audioPlayer.play();
-  }
+  isPlaying = false;
+  updateTextContent();
 }
 
+// Play/pause button
+elements.playPauseBtn.addEventListener('click', playPause);
+elements.prevBtn.addEventListener('click', playPrev);
+elements.nextBtn.addEventListener('click', playNext);
+
+elements.audioPlayer.addEventListener('play', () => {
+  isPlaying = true;
+  updateTextContent();
+});
+elements.audioPlayer.addEventListener('pause', () => {
+  isPlaying = false;
+  updateTextContent();
+});
+elements.audioPlayer.addEventListener('ended', () => {
+  if (repeatMode === 1) {
+    playTrack(currentTrackIndex);
+  } else {
+    playNext();
+  }
+});
+
+// Playlist export/import
 elements.exportPlaylistBtn.addEventListener('click', () => {
-  if (tracks.length === 0) {
+  if (playlist.length === 0) {
     alert(t('noTracks'));
     return;
   }
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tracks));
-  const dlAnchor = document.createElement('a');
-  dlAnchor.setAttribute("href", dataStr);
-  dlAnchor.setAttribute("download", "playlist.json");
-  dlAnchor.click();
+  const dataStr = JSON.stringify(playlist.map(t => ({title: t.title, artist: t.artist})));
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'playlist.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 });
-
-elements.importPlaylistBtn.addEventListener('click', () => {
-  elements.importFileInput.click();
-});
+elements.importPlaylistBtn.addEventListener('click', () => elements.importFileInput.click());
 elements.importFileInput.addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(evt) {
+  reader.onload = evt => {
     try {
-      const importedTracks = JSON.parse(evt.target.result);
-      if (!Array.isArray(importedTracks)) throw new Error("Invalid format");
-      tracks = importedTracks;
-      savePlaylist();
+      const imported = JSON.parse(evt.target.result);
+      if (!Array.isArray(imported)) throw new Error('Invalid format');
+      playlist = imported.map(item => ({
+        title: item.title || 'Unknown',
+        artist: item.artist || '',
+        url: '', // no local file attached
+      }));
+      currentTrackIndex = -1;
       renderPlaylist();
-      if (tracks.length > 0) playTrack(0);
     } catch {
-      alert("Invalid playlist file.");
+      alert('Invalid playlist file.');
     }
   };
   reader.readAsText(file);
 });
 
-// Audio Visualizer Setup
-const ctx = elements.audioVisualizer.getContext('2d');
+// Localization change
+elements.langSelect.addEventListener('change', e => {
+  currentLang = e.target.value;
+  localStorage.setItem('amp-lang', currentLang);
+  updateTextContent();
+  renderPlaylist();
+});
+
+// Theme toggle
+function applyTheme(theme) {
+  document.body.classList.toggle('light-theme', theme === 'light');
+  localStorage.setItem('amp-theme', theme);
+  elements.themeToggle.textContent = theme === 'light' ? '🌞' : '🌙';
+}
+elements.themeToggle.addEventListener('click', () => {
+  const current = localStorage.getItem('amp-theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+});
+applyTheme(localStorage.getItem('amp-theme') || 'dark');
+
+// Audio Visualizer
 function setupVisualizer() {
   if (animationId) cancelAnimationFrame(animationId);
   if (!audioContext) {
@@ -637,47 +651,31 @@ function setupVisualizer() {
   sourceNode.connect(analyser);
   analyser.connect(audioContext.destination);
   analyser.fftSize = 256;
-  drawVisualizer();
-}
-function drawVisualizer() {
-  const width = elements.audioVisualizer.width;
-  const height = elements.audioVisualizer.height;
   const bufferLength = analyser.frequencyBinCount;
   const dataArray = new Uint8Array(bufferLength);
+  const canvas = elements.audioVisualizer;
+  const ctx = canvas.getContext('2d');
 
   function draw() {
     animationId = requestAnimationFrame(draw);
     analyser.getByteFrequencyData(dataArray);
-
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, width, height);
-
-    const barWidth = width / bufferLength;
-    for (let i = 0; i < bufferLength; i++) {
-      const barHeight = dataArray[i] / 2;
-      const x = i * barWidth;
-      ctx.fillStyle = `rgb(${barHeight+100},${255 - barHeight},50)`;
-      ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const barWidth = (canvas.width / bufferLength) * 1.5;
+    let x = 0;
+    for(let i = 0; i < bufferLength; i++) {
+      const barHeight = dataArray[i];
+      ctx.fillStyle = `rgb(${barHeight + 100},50,50)`;
+      ctx.fillRect(x, canvas.height - barHeight / 2, barWidth, barHeight / 2);
+      x += barWidth + 1;
     }
   }
   draw();
 }
-function clearCanvas() {
-  ctx.clearRect(0, 0, elements.audioVisualizer.width, elements.audioVisualizer.height);
-}
 
-// Language switcher
-elements.langSelect.addEventListener('change', () => {
-  lang = elements.langSelect.value;
-  updateLocalization();
-  renderPlaylist();
-});
-
-// Initialize
-loadPlaylist();
-updateLocalization();
+// Initial UI Setup
+updateTextContent();
 renderPlaylist();
-if (tracks.length > 0) playTrack(0);
 
 </script>
 </body>
