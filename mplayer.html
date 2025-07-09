@@ -3,514 +3,682 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Advanced Music Player with Search</title>
+<title>Advanced Music Player</title>
 <style>
   body {
     font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
     background: #121212;
     color: #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    max-width: 480px;
-    margin: auto;
-    user-select: none;
+    display: flex; flex-direction: column; height: 100vh;
   }
-  h1 {
-    margin-bottom: 10px;
+  header {
+    padding: 1rem;
+    background: #1f1f1f;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap;
   }
-  #dropArea {
-    border: 2px dashed #555;
-    border-radius: 10px;
-    padding: 20px;
-    width: 100%;
-    margin-bottom: 15px;
+  header > * {
+    margin: 0.5rem;
+  }
+  #drop-area {
+    border: 2px dashed #444;
+    border-radius: 8px;
+    padding: 2rem;
     text-align: center;
     cursor: pointer;
-    color: #999;
+    margin: 1rem;
+    flex-grow: 1;
+    min-height: 100px;
   }
-  #dropArea.dragover {
-    border-color: #aaa;
-    color: #eee;
-  }
-  #fileInput {
-    display: none;
-  }
-  #searchInput {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background: #222;
-    color: #eee;
+  #drop-area.dragover {
+    border-color: #1db954;
+    background: #282828;
   }
   #playlist {
     list-style: none;
+    margin: 1rem;
     padding: 0;
-    width: 100%;
-    max-height: 250px;
+    max-height: 220px;
     overflow-y: auto;
-    border: 1px solid #444;
-    margin-bottom: 10px;
-    background: #222;
-    border-radius: 6px;
+    flex-grow: 1;
+    background: #181818;
+    border-radius: 8px;
   }
   #playlist li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    cursor: pointer;
+    padding: 0.5rem;
     border-bottom: 1px solid #333;
+    display: flex; align-items: center;
+    cursor: pointer;
   }
-  #playlist li:hover,
   #playlist li.active {
+    background: #1db954;
+    color: #000;
+  }
+  #playlist li:hover {
     background: #333;
   }
-  #playlist img {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 4px;
-  }
-  #playlist .meta {
+  #playlist li .meta {
+    margin-left: 1rem;
     flex-grow: 1;
-    overflow: hidden;
   }
-  #playlist .title {
+  #playlist li .title {
     font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
-  #playlist .artist {
-    font-size: 0.85em;
+  #playlist li .artist {
+    font-size: 0.9rem;
     color: #bbb;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   #controls {
     display: flex;
     justify-content: center;
-    gap: 15px;
-    margin-bottom: 10px;
+    margin: 1rem;
+    gap: 1rem;
   }
   button {
-    background: #333;
+    padding: 0.6rem 1.2rem;
     border: none;
-    color: #eee;
-    padding: 10px 15px;
     border-radius: 4px;
+    background: #1db954;
+    color: #121212;
+    font-weight: bold;
     cursor: pointer;
-    font-size: 14px;
-  }
-  button:hover {
-    background: #555;
+    user-select: none;
   }
   button.active {
-    background: #666;
+    background: #14833b;
   }
-  audio, iframe {
+  #search {
     width: 100%;
-    border-radius: 6px;
-    outline: none;
-    margin-bottom: 10px;
-  }
-  #streamSection {
-    width: 100%;
-    margin-bottom: 15px;
-  }
-  #streamInput {
-    width: 70%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #444;
-    background: #222;
-    color: #eee;
-    margin-right: 5px;
-  }
-  #streamPlayBtn {
-    padding: 9px 14px;
+    max-width: 300px;
+    padding: 0.5rem;
     border-radius: 4px;
     border: none;
-    background: #333;
+    margin: 1rem;
+    background: #222;
     color: #eee;
+  }
+  #stream-input {
+    width: 70%;
+    max-width: 400px;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: none;
+    background: #222;
+    color: #eee;
+  }
+  #stream-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem;
+    justify-content: center;
+  }
+  #audio-player {
+    width: 100%;
+    outline: none;
+  }
+  #youtube-player {
+    width: 100%;
+    max-width: 560px;
+    height: 315px;
+    margin: 1rem auto;
+    display: none;
+  }
+  #yt-video-title {
+    text-align: center;
+    font-weight: bold;
+    margin-top: 0.5rem;
+  }
+  canvas {
+    display: block;
+    margin: 1rem auto;
+    background: #000;
+    border-radius: 8px;
+  }
+  #lang-select {
+    background: #222;
+    color: #eee;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
     cursor: pointer;
   }
-  #streamPlayBtn:hover {
-    background: #555;
+  @media (max-width: 600px) {
+    #controls {
+      flex-wrap: wrap;
+    }
+    #stream-input {
+      width: 100%;
+      max-width: none;
+    }
   }
 </style>
 </head>
 <body>
 
-<h1>Advanced Music Player</h1>
+<header>
+  <div>
+    <button id="play-pause-btn">Play</button>
+    <button id="prev-btn">Prev</button>
+    <button id="next-btn">Next</button>
+    <button id="shuffle-btn">Shuffle Off</button>
+    <button id="repeat-btn">Repeat Off</button>
+  </div>
+  <input id="search" type="search" placeholder="Search songs..." aria-label="Search songs" />
+  <select id="lang-select" aria-label="Select language">
+    <option value="en" selected>English</option>
+    <option value="es">Español</option>
+  </select>
+</header>
 
-<div id="dropArea">Drag & Drop Audio Files Here or Click to Select</div>
-<input type="file" id="fileInput" multiple accept="audio/*" />
+<div id="drop-area" tabindex="0">Drag & Drop audio files here or click to select</div>
+<input type="file" id="file-input" multiple accept="audio/*" style="display:none" />
 
-<input type="text" id="searchInput" placeholder="Search songs or artists..." />
+<ul id="playlist" aria-label="Playlist"></ul>
 
-<ul id="playlist"></ul>
-
-<div id="controls">
-  <button id="prevBtn">Previous</button>
-  <button id="playPauseBtn">Play</button>
-  <button id="nextBtn">Next</button>
-  <button id="shuffleBtn" title="Shuffle">Shuffle Off</button>
-  <button id="repeatBtn" title="Repeat">Repeat Off</button>
+<div id="stream-controls">
+  <input type="url" id="stream-input" placeholder="Enter YouTube or SoundCloud URL" aria-label="Stream URL" />
+  <button id="stream-play-btn">Play Stream</button>
+  <button id="stream-stop-btn">Stop Stream</button>
 </div>
 
-<audio id="audioPlayer" controls></audio>
+<audio id="audio-player" controls></audio>
 
-<div id="streamSection">
-  <input type="text" id="streamInput" placeholder="Enter YouTube video URL or stream URL" />
-  <button id="streamPlayBtn">Play Stream</button>
+<div id="youtube-player">
+  <iframe id="yt-iframe" width="560" height="315" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <div id="yt-video-title"></div>
 </div>
 
-<div id="youtubePlayer" style="display:none;">
-  <iframe id="ytIframe" width="100%" height="200" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-  <button id="stopStreamBtn" style="margin-top: 5px; width: 100%; padding: 10px; background: #b22222; border: none; color: white; border-radius: 6px; cursor: pointer;">Stop Stream</button>
+<canvas id="audio-visualizer" width="600" height="100"></canvas>
+
+<div style="text-align:center; margin: 1rem;">
+  <button id="export-playlist-btn">Export Playlist</button>
+  <button id="import-playlist-btn">Import Playlist</button>
+  <input type="file" id="import-file-input" accept=".json" style="display:none" />
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsmediatags@3.9.5/dist/jsmediatags.min.js"></script>
 <script>
-  const dropArea = document.getElementById('dropArea');
-  const fileInput = document.getElementById('fileInput');
-  const searchInput = document.getElementById('searchInput');
-  const playlist = document.getElementById('playlist');
-  const audioPlayer = document.getElementById('audioPlayer');
-  const playPauseBtn = document.getElementById('playPauseBtn');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const shuffleBtn = document.getElementById('shuffleBtn');
-  const repeatBtn = document.getElementById('repeatBtn');
-  const streamInput = document.getElementById('streamInput');
-  const streamPlayBtn = document.getElementById('streamPlayBtn');
-  const youtubePlayerDiv = document.getElementById('youtubePlayer');
-  const ytIframe = document.getElementById('ytIframe');
-  const stopStreamBtn = document.getElementById('stopStreamBtn');
+// Localization
+const locales = {
+  en: {
+    dragDrop: "Drag & Drop audio files here or click to select",
+    searchPlaceholder: "Search songs...",
+    streamPlaceholder: "Enter YouTube or SoundCloud URL",
+    playStream: "Play Stream",
+    stopStream: "Stop Stream",
+    play: "Play",
+    pause: "Pause",
+    prev: "Prev",
+    next: "Next",
+    shuffleOff: "Shuffle Off",
+    shuffleOn: "Shuffle On",
+    repeatOff: "Repeat Off",
+    repeatOne: "Repeat One",
+    repeatAll: "Repeat All",
+    exportPlaylist: "Export Playlist",
+    importPlaylist: "Import Playlist",
+    unsupportedStream: "Unsupported stream URL or format.",
+    enterStreamUrl: "Please enter a URL to stream.",
+    noTracks: "No tracks in playlist.",
+  },
+  es: {
+    dragDrop: "Arrastra y suelta archivos de audio aquí o haz clic para seleccionar",
+    searchPlaceholder: "Buscar canciones...",
+    streamPlaceholder: "Introduce URL de YouTube o SoundCloud",
+    playStream: "Reproducir",
+    stopStream: "Detener",
+    play: "Reproducir",
+    pause: "Pausa",
+    prev: "Anterior",
+    next: "Siguiente",
+    shuffleOff: "Aleatorio Desactivado",
+    shuffleOn: "Aleatorio Activado",
+    repeatOff: "Repetir Desactivado",
+    repeatOne: "Repetir Una",
+    repeatAll: "Repetir Todas",
+    exportPlaylist: "Exportar Lista",
+    importPlaylist: "Importar Lista",
+    unsupportedStream: "URL o formato no soportado.",
+    enterStreamUrl: "Por favor, introduce una URL para reproducir.",
+    noTracks: "No hay canciones en la lista.",
+  }
+};
 
-  let tracks = [];
-  let currentTrackIndex = 0;
-  let isPlaying = false;
-  let isShuffle = false;
-  let repeatMode = 0; // 0 = off, 1 = repeat one, 2 = repeat all
-  let streamPlaying = false;
+let lang = 'en';
 
-  // Load playlist from localStorage
-  function loadPlaylist() {
-    const saved = localStorage.getItem('musicPlayerPlaylist');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (Array.isArray(data)) {
-          tracks = data.map(t => ({
-            name: t.name,
-            artist: t.artist,
-            title: t.title,
-            file: null,
-            url: t.url,
-            picture: t.picture || null
-          }));
-          currentTrackIndex = 0;
-          renderPlaylist();
-        }
-      } catch (e) {
-        console.error("Error parsing saved playlist:", e);
-      }
+const elements = {
+  dropArea: document.getElementById('drop-area'),
+  fileInput: document.getElementById('file-input'),
+  playlist: document.getElementById('playlist'),
+  playPauseBtn: document.getElementById('play-pause-btn'),
+  prevBtn: document.getElementById('prev-btn'),
+  nextBtn: document.getElementById('next-btn'),
+  shuffleBtn: document.getElementById('shuffle-btn'),
+  repeatBtn: document.getElementById('repeat-btn'),
+  searchInput: document.getElementById('search'),
+  streamInput: document.getElementById('stream-input'),
+  streamPlayBtn: document.getElementById('stream-play-btn'),
+  streamStopBtn: document.getElementById('stream-stop-btn'),
+  audioPlayer: document.getElementById('audio-player'),
+  youtubePlayerDiv: document.getElementById('youtube-player'),
+  ytIframe: document.getElementById('yt-iframe'),
+  ytVideoTitle: document.getElementById('yt-video-title'),
+  audioVisualizer: document.getElementById('audio-visualizer'),
+  exportPlaylistBtn: document.getElementById('export-playlist-btn'),
+  importPlaylistBtn: document.getElementById('import-playlist-btn'),
+  importFileInput: document.getElementById('import-file-input'),
+  langSelect: document.getElementById('lang-select'),
+};
+
+let tracks = [];
+let currentTrackIndex = -1;
+let isPlaying = false;
+let isShuffle = false;
+let repeatMode = 0; // 0=off,1=one,2=all
+let streamPlaying = false;
+let audioContext, analyser, sourceNode, animationId;
+
+function t(key) {
+  return locales[lang][key] || key;
+}
+
+function updateLocalization() {
+  elements.dropArea.textContent = t('dragDrop');
+  elements.searchInput.placeholder = t('searchPlaceholder');
+  elements.streamInput.placeholder = t('streamPlaceholder');
+  elements.streamPlayBtn.textContent = t('playStream');
+  elements.streamStopBtn.textContent = t('stopStream');
+  elements.playPauseBtn.textContent = isPlaying ? t('pause') : t('play');
+  elements.prevBtn.textContent = t('prev');
+  elements.nextBtn.textContent = t('next');
+  elements.shuffleBtn.textContent = isShuffle ? t('shuffleOn') : t('shuffleOff');
+  const repeatTexts = [t('repeatOff'), t('repeatOne'), t('repeatAll')];
+  elements.repeatBtn.textContent = repeatTexts[repeatMode];
+  elements.exportPlaylistBtn.textContent = t('exportPlaylist');
+  elements.importPlaylistBtn.textContent = t('importPlaylist');
+}
+
+function savePlaylist() {
+  localStorage.setItem('advanced-music-player-playlist', JSON.stringify(tracks));
+}
+
+function loadPlaylist() {
+  const saved = localStorage.getItem('advanced-music-player-playlist');
+  if (saved) {
+    try {
+      tracks = JSON.parse(saved);
+    } catch {
+      tracks = [];
     }
   }
+}
 
-  // Save playlist to localStorage (only URLs and metadata)
-  function savePlaylist() {
-    const dataToSave = tracks.map(t => ({
-      name: t.name,
-      artist: t.artist,
-      title: t.title,
-      url: t.url,
-      picture: t.picture || null
-    }));
-    localStorage.setItem('musicPlayerPlaylist', JSON.stringify(dataToSave));
-  }
-
-  // Add files with metadata reading
-  async function addFiles(files) {
-    for (const file of files) {
-      await readMetadata(file);
-    }
-    savePlaylist();
-    if (!streamPlaying && tracks.length === files.length) {
-      playTrack(0);
-    }
-  }
-
-  // Read metadata and add track
-  function readMetadata(file) {
-    return new Promise((resolve) => {
-      jsmediatags.read(file, {
-        onSuccess: function(tag) {
-          const tags = tag.tags;
-          const title = tags.title || file.name;
-          const artist = tags.artist || 'Unknown Artist';
-
-          let picture = null;
-          if (tags.picture) {
-            const data = tags.picture.data;
-            const format = tags.picture.format;
-            let base64String = "";
-            for (let i = 0; i < data.length; i++) {
-              base64String += String.fromCharCode(data[i]);
-            }
-            picture = `data:${format};base64,${btoa(base64String)}`;
-          }
-          const url = URL.createObjectURL(file);
-
-          tracks.push({file, name: file.name, title, artist, url, picture});
-          renderPlaylist();
-          resolve();
-        },
-        onError: function() {
-          const url = URL.createObjectURL(file);
-          tracks.push({file, name: file.name, title: file.name, artist: 'Unknown Artist', url, picture: null});
-          renderPlaylist();
-          resolve();
-        }
-      });
-    });
-  }
-
-  // Render playlist UI filtering by search
-  function renderPlaylist() {
-    playlist.innerHTML = "";
-    const filter = searchInput.value.toLowerCase();
-
-    tracks.forEach((track, idx) => {
-      const text = (track.title + " " + track.artist).toLowerCase();
-      if (!text.includes(filter)) return; // skip if doesn't match search
-
-      const li = document.createElement('li');
-      li.classList.toggle('active', idx === currentTrackIndex);
-      li.addEventListener('click', () => {
-        playTrack(idx);
-      });
-
-      if (track.picture) {
-        const img = document.createElement('img');
-        img.src = track.picture;
-        li.appendChild(img);
-      } else {
-        const placeholder = document.createElement('div');
-        placeholder.style.width = '40px';
-        placeholder.style.height = '40px';
-        placeholder.style.background = '#444';
-        placeholder.style.borderRadius = '4px';
-        li.appendChild(placeholder);
-      }
-
-      const metaDiv = document.createElement('div');
-      metaDiv.className = 'meta';
-
-      const titleDiv = document.createElement('div');
-      titleDiv.className = 'title';
-      titleDiv.textContent = track.title;
-
-      const artistDiv = document.createElement('div');
-      artistDiv.className = 'artist';
-      artistDiv.textContent = track.artist;
-
-      metaDiv.appendChild(titleDiv);
-      metaDiv.appendChild(artistDiv);
-      li.appendChild(metaDiv);
-
-      playlist.appendChild(li);
-    });
-  }
-
-  // Play selected track by index
-  function playTrack(index) {
-    if (index < 0 || index >= tracks.length) return;
-    currentTrackIndex = index;
-    const track = tracks[index];
-    streamPlaying = false;
-    stopStream();
-    audioPlayer.src = track.url;
-    audioPlayer.play();
-    isPlaying = true;
-    updatePlayPauseBtn();
-    renderPlaylist();
-  }
-
-  function playPause() {
-    if (streamPlaying) {
-      // Control YouTube iframe (not supported here), so just toggle audio element
+function renderPlaylist() {
+  const searchTerm = elements.searchInput.value.trim().toLowerCase();
+  elements.playlist.innerHTML = '';
+  tracks.forEach((track, i) => {
+    if (
+      searchTerm &&
+      !(
+        track.title.toLowerCase().includes(searchTerm) ||
+        track.artist.toLowerCase().includes(searchTerm)
+      )
+    ) {
       return;
     }
-    if (isPlaying) {
-      audioPlayer.pause();
-    } else {
-      audioPlayer.play();
-    }
-  }
+    const li = document.createElement('li');
+    li.classList.toggle('active', i === currentTrackIndex);
+    li.tabIndex = 0;
 
-  function updatePlayPauseBtn() {
-    playPauseBtn.textContent = isPlaying ? 'Pause' : 'Play';
-  }
-
-  // Previous track logic
-  function playPrev() {
-    if (tracks.length === 0) return;
-    if (isShuffle) {
-      playTrack(Math.floor(Math.random() * tracks.length));
-    } else {
-      let newIndex = currentTrackIndex - 1;
-      if (newIndex < 0) newIndex = tracks.length - 1;
-      playTrack(newIndex);
-    }
-  }
-
-  // Next track logic
-  function playNext() {
-    if (tracks.length === 0) return;
-    if (isShuffle) {
-      playTrack(Math.floor(Math.random() * tracks.length));
-    } else {
-      let newIndex = currentTrackIndex + 1;
-      if (newIndex >= tracks.length) newIndex = 0;
-      playTrack(newIndex);
-    }
-  }
-
-  // Toggle shuffle
-  shuffleBtn.addEventListener('click', () => {
-    isShuffle = !isShuffle;
-    shuffleBtn.textContent = isShuffle ? 'Shuffle On' : 'Shuffle Off';
-    shuffleBtn.classList.toggle('active', isShuffle);
-  });
-
-  // Toggle repeat modes: off → one → all → off ...
-  repeatBtn.addEventListener('click', () => {
-    repeatMode = (repeatMode + 1) % 3;
-    if (repeatMode === 0) repeatBtn.textContent = 'Repeat Off';
-    else if (repeatMode === 1) repeatBtn.textContent = 'Repeat One';
-    else repeatBtn.textContent = 'Repeat All';
-    repeatBtn.classList.toggle('active', repeatMode !== 0);
-  });
-
-  // When track ends
-  audioPlayer.addEventListener('ended', () => {
-    if (repeatMode === 1) {
-      // Repeat one
-      audioPlayer.currentTime = 0;
-      audioPlayer.play();
-    } else if (repeatMode === 2) {
-      // Repeat all (next track or loop)
-      playNext();
-    } else {
-      // No repeat, just next track or stop
-      if (currentTrackIndex < tracks.length - 1) {
-        playNext();
-      } else {
-        isPlaying = false;
-        updatePlayPauseBtn();
+    li.onclick = () => playTrack(i);
+    li.onkeypress = e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        playTrack(i);
       }
-    }
-  });
+    };
 
-  // Update playPauseBtn on play/pause events
-  audioPlayer.addEventListener('play', () => {
-    isPlaying = true;
-    updatePlayPauseBtn();
-  });
-  audioPlayer.addEventListener('pause', () => {
-    isPlaying = false;
-    updatePlayPauseBtn();
-  });
-
-  // Drag & Drop handlers
-  dropArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropArea.classList.add('dragover');
-  });
-  dropArea.addEventListener('dragleave', (e) => {
-    dropArea.classList.remove('dragover');
-  });
-  dropArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropArea.classList.remove('dragover');
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/'));
-    addFiles(files);
-  });
-  dropArea.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', () => {
-    const files = Array.from(fileInput.files);
-    addFiles(files);
-  });
-
-  // Control buttons
-  playPauseBtn.addEventListener('click', playPause);
-  prevBtn.addEventListener('click', playPrev);
-  nextBtn.addEventListener('click', playNext);
-
-  // Search filter
-  searchInput.addEventListener('input', () => {
-    renderPlaylist();
-  });
-
-  // Stream from URL (YouTube or direct audio)
-  streamPlayBtn.addEventListener('click', () => {
-    const url = streamInput.value.trim();
-    if (!url) return alert("Please enter a URL to stream.");
-
-    // Try to extract YouTube video ID
-    const ytMatch = url.match(/(?:youtube\.com.*(?:\\?|&)v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-    if (ytMatch) {
-      playYouTubeVideo(ytMatch[1]);
-    } else if (url.match(/^https?:\/\/.+\.(mp3|wav|ogg)$/)) {
-      playDirectStream(url);
+    if (track.albumArt) {
+      const img = document.createElement('img');
+      img.src = track.albumArt;
+      img.alt = track.title + " album art";
+      img.style.width = '40px';
+      img.style.height = '40px';
+      img.style.borderRadius = '4px';
+      li.appendChild(img);
     } else {
-      alert("Unsupported stream URL or format.");
+      const placeholder = document.createElement('div');
+      placeholder.style.width = '40px';
+      placeholder.style.height = '40px';
+      placeholder.style.background = '#444';
+      placeholder.style.borderRadius = '4px';
+      li.appendChild(placeholder);
     }
+
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'meta';
+
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'title';
+    titleDiv.textContent = track.title;
+
+    const artistDiv = document.createElement('div');
+    artistDiv.className = 'artist';
+    artistDiv.textContent = track.artist;
+
+    metaDiv.appendChild(titleDiv);
+    metaDiv.appendChild(artistDiv);
+    li.appendChild(metaDiv);
+
+    elements.playlist.appendChild(li);
   });
+}
 
-  function playYouTubeVideo(videoId) {
-    streamPlaying = true;
-    audioPlayer.pause();
-    audioPlayer.src = '';
-    youtubePlayerDiv.style.display = 'block';
-    ytIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&rel=0`;
+function addFiles(files) {
+  for (const file of files) {
+    const url = URL.createObjectURL(file);
+    const title = file.name.replace(/\.[^/.]+$/, "");
+    tracks.push({
+      url,
+      title,
+      artist: 'Unknown Artist',
+      albumArt: null,
+      localFile: true,
+    });
   }
-
-  function playDirectStream(url) {
-    streamPlaying = true;
-    youtubePlayerDiv.style.display = 'none';
-    ytIframe.src = '';
-    audioPlayer.src = url;
-    audioPlayer.play();
-  }
-
-  function stopStream() {
-    if (streamPlaying) {
-      streamPlaying = false;
-      ytIframe.src = '';
-      youtubePlayerDiv.style.display = 'none';
-    }
-  }
-
-  stopStreamBtn.addEventListener('click', () => {
-    stopStream();
-  });
-
-  // Init
-  loadPlaylist();
-  if (tracks.length > 0) {
+  savePlaylist();
+  renderPlaylist();
+  if (currentTrackIndex === -1 && tracks.length > 0) {
     playTrack(0);
   }
+}
+
+function playTrack(index) {
+  if (index < 0 || index >= tracks.length) return;
+  currentTrackIndex = index;
+  const track = tracks[index];
+  streamPlaying = false;
+  stopStream();
+  elements.audioPlayer.src = track.url;
+  elements.audioPlayer.play();
+  isPlaying = true;
+  updatePlayPauseBtn();
+  renderPlaylist();
+  setupVisualizer();
+}
+
+function playPause() {
+  if (streamPlaying) {
+    // Currently no iframe API control for YouTube/SoundCloud in this demo
+    // Could be extended using YouTube Player API or SoundCloud Widget API
+    return;
+  }
+  if (isPlaying) {
+    elements.audioPlayer.pause();
+  } else {
+    elements.audioPlayer.play();
+  }
+}
+
+function updatePlayPauseBtn() {
+  elements.playPauseBtn.textContent = isPlaying ? t('pause') : t('play');
+}
+
+function playPrev() {
+  if (tracks.length === 0) return;
+  if (isShuffle) {
+    playTrack(Math.floor(Math.random() * tracks.length));
+  } else {
+    let newIndex = currentTrackIndex - 1;
+    if (newIndex < 0) newIndex = tracks.length - 1;
+    playTrack(newIndex);
+  }
+}
+
+function playNext() {
+  if (tracks.length === 0) return;
+  if (isShuffle) {
+    playTrack(Math.floor(Math.random() * tracks.length));
+  } else {
+    let newIndex = currentTrackIndex + 1;
+    if (newIndex >= tracks.length) newIndex = 0;
+    playTrack(newIndex);
+  }
+}
+
+elements.shuffleBtn.addEventListener('click', () => {
+  isShuffle = !isShuffle;
+  elements.shuffleBtn.textContent = isShuffle ? t('shuffleOn') : t('shuffleOff');
+  elements.shuffleBtn.classList.toggle('active', isShuffle);
+});
+
+elements.repeatBtn.addEventListener('click', () => {
+  repeatMode = (repeatMode + 1) % 3;
+  const repeatTexts = [t('repeatOff'), t('repeatOne'), t('repeatAll')];
+  elements.repeatBtn.textContent = repeatTexts[repeatMode];
+  elements.repeatBtn.classList.toggle('active', repeatMode !== 0);
+});
+
+elements.audioPlayer.addEventListener('ended', () => {
+  if (repeatMode === 1) {
+    elements.audioPlayer.currentTime = 0;
+    elements.audioPlayer.play();
+  } else if (repeatMode === 2) {
+    playNext();
+  } else {
+    if (currentTrackIndex < tracks.length - 1) {
+      playNext();
+    } else {
+      isPlaying = false;
+      updatePlayPauseBtn();
+    }
+  }
+});
+
+elements.audioPlayer.addEventListener('play', () => {
+  isPlaying = true;
+  updatePlayPauseBtn();
+  setupVisualizer();
+});
+
+elements.audioPlayer.addEventListener('pause', () => {
+  isPlaying = false;
+  updatePlayPauseBtn();
+  cancelAnimationFrame(animationId);
+  clearCanvas();
+});
+
+elements.playPauseBtn.addEventListener('click', playPause);
+elements.prevBtn.addEventListener('click', playPrev);
+elements.nextBtn.addEventListener('click', playNext);
+
+elements.searchInput.addEventListener('input', () => {
+  renderPlaylist();
+});
+
+elements.dropArea.addEventListener('dragover', e => {
+  e.preventDefault();
+  elements.dropArea.classList.add('dragover');
+});
+elements.dropArea.addEventListener('dragleave', e => {
+  elements.dropArea.classList.remove('dragover');
+});
+elements.dropArea.addEventListener('drop', e => {
+  e.preventDefault();
+  elements.dropArea.classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/'));
+  addFiles(files);
+});
+elements.dropArea.addEventListener('click', () => {
+  elements.fileInput.click();
+});
+elements.fileInput.addEventListener('change', () => {
+  addFiles(Array.from(elements.fileInput.files));
+});
+
+// Streaming support: YouTube and SoundCloud
+elements.streamPlayBtn.addEventListener('click', () => {
+  const url = elements.streamInput.value.trim();
+  if (!url) {
+    alert(t('enterStreamUrl'));
+    return;
+  }
+
+  // YouTube ID extraction
+  const ytMatch = url.match(/(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) {
+    playYouTubeVideo(ytMatch[1]);
+    return;
+  }
+  // SoundCloud URL (simple check)
+  if (/soundcloud\.com/.test(url)) {
+    playSoundCloud(url);
+    return;
+  }
+  alert(t('unsupportedStream'));
+});
+
+elements.streamStopBtn.addEventListener('click', () => {
+  stopStream();
+});
+
+function playYouTubeVideo(videoId) {
+  streamPlaying = true;
+  elements.audioPlayer.pause();
+  elements.audioPlayer.src = '';
+  elements.youtubePlayerDiv.style.display = 'block';
+  elements.ytIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1&rel=0`;
+  fetchYouTubeVideoTitle(videoId);
+  cancelAnimationFrame(animationId);
+  clearCanvas();
+}
+
+function fetchYouTubeVideoTitle(videoId) {
+  // Use YouTube oEmbed API to get video info
+  fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
+    .then(res => res.json())
+    .then(data => {
+      elements.ytVideoTitle.textContent = data.title;
+    }).catch(() => {
+      elements.ytVideoTitle.textContent = '';
+    });
+}
+
+function playSoundCloud(url) {
+  streamPlaying = true;
+  elements.audioPlayer.pause();
+  elements.audioPlayer.src = '';
+  elements.youtubePlayerDiv.style.display = 'block';
+  // Embed SoundCloud player iframe
+  elements.ytIframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=true`;
+  elements.ytVideoTitle.textContent = '';
+  cancelAnimationFrame(animationId);
+  clearCanvas();
+}
+
+function stopStream() {
+  if (!streamPlaying) return;
+  streamPlaying = false;
+  elements.youtubePlayerDiv.style.display = 'none';
+  elements.ytIframe.src = '';
+  elements.ytVideoTitle.textContent = '';
+  if (currentTrackIndex >= 0 && tracks.length > 0) {
+    elements.audioPlayer.src = tracks[currentTrackIndex].url;
+    if (isPlaying) elements.audioPlayer.play();
+  }
+}
+
+elements.exportPlaylistBtn.addEventListener('click', () => {
+  if (tracks.length === 0) {
+    alert(t('noTracks'));
+    return;
+  }
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tracks));
+  const dlAnchor = document.createElement('a');
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", "playlist.json");
+  dlAnchor.click();
+});
+
+elements.importPlaylistBtn.addEventListener('click', () => {
+  elements.importFileInput.click();
+});
+elements.importFileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const importedTracks = JSON.parse(evt.target.result);
+      if (!Array.isArray(importedTracks)) throw new Error("Invalid format");
+      tracks = importedTracks;
+      savePlaylist();
+      renderPlaylist();
+      if (tracks.length > 0) playTrack(0);
+    } catch {
+      alert("Invalid playlist file.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Audio Visualizer Setup
+const ctx = elements.audioVisualizer.getContext('2d');
+function setupVisualizer() {
+  if (animationId) cancelAnimationFrame(animationId);
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (sourceNode) {
+    sourceNode.disconnect();
+  }
+  sourceNode = audioContext.createMediaElementSource(elements.audioPlayer);
+  analyser = audioContext.createAnalyser();
+  sourceNode.connect(analyser);
+  analyser.connect(audioContext.destination);
+  analyser.fftSize = 256;
+  drawVisualizer();
+}
+function drawVisualizer() {
+  const width = elements.audioVisualizer.width;
+  const height = elements.audioVisualizer.height;
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  function draw() {
+    animationId = requestAnimationFrame(draw);
+    analyser.getByteFrequencyData(dataArray);
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+
+    const barWidth = width / bufferLength;
+    for (let i = 0; i < bufferLength; i++) {
+      const barHeight = dataArray[i] / 2;
+      const x = i * barWidth;
+      ctx.fillStyle = `rgb(${barHeight+100},${255 - barHeight},50)`;
+      ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
+    }
+  }
+  draw();
+}
+function clearCanvas() {
+  ctx.clearRect(0, 0, elements.audioVisualizer.width, elements.audioVisualizer.height);
+}
+
+// Language switcher
+elements.langSelect.addEventListener('change', () => {
+  lang = elements.langSelect.value;
+  updateLocalization();
+  renderPlaylist();
+});
+
+// Initialize
+loadPlaylist();
+updateLocalization();
+renderPlaylist();
+if (tracks.length > 0) playTrack(0);
 
 </script>
-
 </body>
 </html>
