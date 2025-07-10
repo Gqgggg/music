@@ -385,7 +385,7 @@
   const importFileInput = document.getElementById('import-file-input');
   const visualizerCanvas = document.getElementById('visualizer');
   const langSelect = document.getElementById('lang-select');
-  const themeColorPicker = document.getElementById('theme-color-picker'); // New element
+  const themeColorPicker = document.getElementById('theme-color-picker');
 
   let locale = locales.en;
 
@@ -619,14 +619,14 @@
   function toggleShuffle() {
     shuffle = !shuffle;
     shuffleBtn.setAttribute('aria-pressed', shuffle);
-    shuffleBtn.style.color = shuffle ? 'var(--primary-color)' : ''; // Use CSS variable
+    shuffleBtn.style.color = shuffle ? 'var(--primary-color)' : '';
   }
 
   // Repeat toggle
   function toggleRepeat() {
     repeat = !repeat;
     repeatBtn.setAttribute('aria-pressed', repeat);
-    repeatBtn.style.color = repeat ? 'var(--primary-color)' : ''; // Use CSS variable
+    repeatBtn.style.color = repeat ? 'var(--primary-color)' : '';
   }
 
   // Play streaming URL
@@ -770,8 +770,6 @@
           const barHeight = dataArray[i] / 2;
           // Get the current primary color from the CSS variable
           const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-          // For a simple visualization, you could use parts of the primary color or a fixed color
-          // Here, we'll just make the bars related to the primary color in a simple way
           canvasCtx.fillStyle = primaryColor;
           canvasCtx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
           x += barWidth + 1;
@@ -780,7 +778,6 @@
 
       draw();
     } catch(e) {
-      // Visualizer won't work on unsupported browsers or without permission
       console.warn("Visualizer not supported", e);
     }
   }
@@ -837,18 +834,27 @@
       renderPlaylist();
     });
 
-    // Event listener for the theme color picker
     themeColorPicker.addEventListener('input', (e) => {
       document.documentElement.style.setProperty('--primary-color', e.target.value);
-      // Re-render playlist to update active item color if needed
       updatePlaylistActive();
-      // Potentially update visualizer if its colors depend on the primary color dynamically
-      // For this simple visualizer, it will pick up the new color on next draw cycle.
     });
 
     updateCoverArt(defaultCoverArt);
     renderPlaylist();
     setupVisualizer();
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
   }
 
   init();
@@ -857,4 +863,3 @@
 </script>
 </body>
 </html>
-```
