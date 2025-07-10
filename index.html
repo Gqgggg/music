@@ -172,6 +172,37 @@
     text-overflow: ellipsis;
   }
 
+  /* New styles for download/delete buttons */
+  .download-btn,
+  .delete-download-btn {
+    margin-left: auto; /* Push buttons to the right */
+    background: none;
+    border: none;
+    color: #eee;
+    font-size: 1.2em;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+    padding: 5px; /* Add some padding for easier clicking */
+    border-radius: 4px;
+  }
+
+  .download-btn:hover,
+  .delete-download-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .delete-download-btn {
+    color: #f00; /* Red for delete */
+  }
+
+  .download-btn:disabled,
+  .delete-download-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
   #search-input,
   #stream-url-input {
     width: calc(100% - 40px);
@@ -314,6 +345,12 @@
       importError: "Failed to import playlist.",
       noSongsInPlaylist: "No songs in playlist.",
       errorLoadingFile: "Error loading file:",
+      downloadTrack: "Download track",
+      deleteDownloadedTrack: "Delete downloaded track",
+      downloadedAlert: "downloaded!",
+      downloadFailedAlert: "Failed to download music. See console for details.",
+      deleteDownloadedAlert: "deleted from downloads.",
+      deleteFailedAlert: "Failed to delete music. See console for details.",
     },
     es: {
       searchPlaceholder: "Buscar canciones...",
@@ -333,6 +370,12 @@
       importError: "Error al importar la lista.",
       noSongsInPlaylist: "No hay canciones en la lista.",
       errorLoadingFile: "Error cargando archivo:",
+      downloadTrack: "Descargar pista",
+      deleteDownloadedTrack: "Eliminar pista descargada",
+      downloadedAlert: "descargado!",
+      downloadFailedAlert: "Fallo al descargar la música. Ver consola para detalles.",
+      deleteDownloadedAlert: "eliminado de las descargas.",
+      deleteFailedAlert: "Fallo al eliminar la música. Ver consola para detalles.",
     },
     fr: {
       searchPlaceholder: "Rechercher des chansons...",
@@ -352,6 +395,12 @@
       importError: "Échec de l'importation de la liste.",
       noSongsInPlaylist: "Aucune chanson dans la liste.",
       errorLoadingFile: "Erreur de chargement du fichier :",
+      downloadTrack: "Télécharger la piste",
+      deleteDownloadedTrack: "Supprimer la piste téléchargée",
+      downloadedAlert: "téléchargé !",
+      downloadFailedAlert: "Échec du téléchargement de la musique. Voir la console pour plus de détails.",
+      deleteDownloadedAlert: "supprimé des téléchargements.",
+      deleteFailedAlert: "Échec de la suppression de la musique. Voir la console pour plus de détails.",
     },
     de: {
       searchPlaceholder: "Songs suchen...",
@@ -371,6 +420,12 @@
       importError: "Import der Playlist fehlgeschlagen.",
       noSongsInPlaylist: "Keine Lieder in der Playlist.",
       errorLoadingFile: "Fehler beim Laden der Datei:",
+      downloadTrack: "Titel herunterladen",
+      deleteDownloadedTrack: "Heruntergeladenen Titel löschen",
+      downloadedAlert: "heruntergeladen!",
+      downloadFailedAlert: "Fehler beim Herunterladen der Musik. Details in der Konsole.",
+      deleteDownloadedAlert: "aus Downloads gelöscht.",
+      deleteFailedAlert: "Fehler beim Löschen der Musik. Details in der Konsole.",
     },
   };
 
@@ -406,6 +461,10 @@
 
   // Audio context for visualization
   let audioCtx, analyser, source, dataArray, animationId;
+
+  // IndexedDB Constants
+  const IDB_DATABASE_NAME = 'music-db';
+  const IDB_STORE_NAME = 'tracks';
 
   // Helper: default cover art SVG as base64 data URI
   const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDUwIDUwIiBmaWxsPSIjNjY2NjY2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI2NjY2NjYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNiA2IiBzdHJva2U9IiM0MDQwNDAiIHN0cm9rZS13aWR0aD0iNSIvPgo8cGF0aCBkPSJNMjUgMTVsNiA2LTYgNm0wIDEwbDYgNm0tNi02LTYgNiIgZmlsbD0iIzc3N2Y3ZiIvPgo8L3N2Zz4=`;
@@ -449,8 +508,172 @@
       title = fileOrUrl.name.replace(/\.[^/.]+$/, "");
       artist = '';
     }
-    return {title, artist, url, cover};
+    // Add new properties for download feature
+    return {title, artist, url, cover, isDownloaded: false, offlineUrl: null};
   }
+
+  // Helper to open IndexedDB
+  async function openIndexedDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(IDB_DATABASE_NAME, 1); // Version 1
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+          db.createObjectStore(IDB_STORE_NAME, { keyPath: 'id' });
+        }
+      };
+
+      request.onsuccess = (event) => {
+        resolve(event.target.result);
+      };
+
+      request.onerror = (event) => {
+        console.error('IndexedDB error:', event.target.error);
+        reject(event.target.error);
+      };
+    });
+  }
+
+  // Function to download and store a track
+  async function downloadAndStoreTrack(track) {
+    if (!track || !track.url) {
+      console.error('Invalid track object for download:', track);
+      return false;
+    }
+    if (track.isDownloaded) {
+        console.log(`Track "${track.title}" is already downloaded.`);
+        return true; // Already downloaded, consider it a success for this operation
+    }
+
+    // Generate a unique ID for the track in IndexedDB based on original URL hash or a unique identifier
+    // For simplicity, let's use a combination of URL hash and timestamp
+    const trackId = `track_${btoa(track.url).replace(/=/g, '')}_${Date.now()}`;
+
+
+    try {
+      const db = await openIndexedDB();
+      const response = await fetch(track.url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const audioBlob = await response.blob();
+      const mimeType = response.headers.get('Content-Type') || 'audio/mpeg';
+
+      const transaction = db.transaction([IDB_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(IDB_STORE_NAME);
+
+      // Store the audio blob and original metadata
+      const dataToStore = {
+        id: trackId, // Unique ID for IndexedDB
+        title: track.title,
+        artist: track.artist,
+        originalUrl: track.url, // Keep original URL
+        audioBlob: audioBlob,
+        mimeType: mimeType,
+        cover: track.cover || defaultCoverArt,
+      };
+
+      await store.add(dataToStore);
+
+      // Update the original playlist item to point to the IndexedDB URL
+      const originalTrackIndex = playlist.findIndex(t => t.url === track.url);
+      if (originalTrackIndex !== -1) {
+        playlist[originalTrackIndex].offlineUrl = `indexeddb://${trackId}`; // Custom URL scheme
+        playlist[originalTrackIndex].isDownloaded = true;
+        renderPlaylist(); // Re-render to update UI (e.g., show delete button)
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error downloading and storing track:', error);
+      alert(`${locale.downloadFailedAlert}`);
+      return false;
+    }
+  }
+
+  // Function to delete a track from IndexedDB
+  async function deleteStoredTrack(track) {
+      if (!track || !track.offlineUrl) return false;
+
+      const urlObj = new URL(track.offlineUrl);
+      if (urlObj.protocol !== 'indexeddb:') {
+          console.warn('Track is not an IndexedDB URL, cannot delete:', track.offlineUrl);
+          return false;
+      }
+      const trackId = urlObj.hostname; // The hostname is our ID
+
+      try {
+          const db = await openIndexedDB();
+          const transaction = db.transaction([IDB_STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(IDB_STORE_NAME);
+
+          await store.delete(trackId);
+
+          // Update the original playlist item
+          const originalTrackIndex = playlist.findIndex(t => t.offlineUrl === track.offlineUrl);
+          if (originalTrackIndex !== -1) {
+              delete playlist[originalTrackIndex].offlineUrl; // Remove offline URL
+              playlist[originalTrackIndex].isDownloaded = false;
+              renderPlaylist(); // Re-render to update UI
+              return true;
+          }
+          return false;
+      } catch (error) {
+          console.error('Error deleting track from IndexedDB:', error);
+          alert(`${locale.deleteFailedAlert}`);
+          return false;
+      }
+  }
+
+  // Function to check if a track is downloaded
+  async function isTrackDownloaded(track) {
+    if (!track || !track.url) return false;
+
+    try {
+      const db = await openIndexedDB();
+      const transaction = db.transaction([IDB_STORE_NAME], 'readonly');
+      const store = transaction.objectStore(IDB_STORE_NAME);
+      
+      // Iterate through store to find matching originalUrl
+      return new Promise((resolve) => {
+        const request = store.openCursor();
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            if (cursor.value.originalUrl === track.url) {
+              // Update the playlist track's offlineUrl and isDownloaded status
+              track.offlineUrl = `indexeddb://${cursor.value.id}`;
+              track.isDownloaded = true;
+              resolve(true);
+              return;
+            }
+            cursor.continue();
+          } else {
+            resolve(false);
+          }
+        };
+        request.onerror = () => {
+          console.error("Error checking download status:", event.target.error);
+          resolve(false);
+        };
+      });
+    } catch (error) {
+        console.error("Could not open IndexedDB to check download status:", error);
+        return false;
+    }
+  }
+
+  // Populate playlist with tracks and update download status
+  async function checkAllTracksDownloadStatus() {
+    // We need to re-check all tracks, especially after loading a playlist
+    // This will update the `isDownloaded` and `offlineUrl` properties directly on `playlist` objects
+    for (const track of playlist) {
+      await isTrackDownloaded(track);
+    }
+    renderPlaylist(); // Re-render after all statuses are updated
+  }
+
 
   // Render playlist items filtered by searchInput.value
   function renderPlaylist() {
@@ -505,14 +728,62 @@
       item.appendChild(img);
       item.appendChild(titleArtist);
 
+      // Download button
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'download-btn';
+      downloadBtn.setAttribute('aria-label', locale.downloadTrack);
+      downloadBtn.textContent = '⬇️';
+      downloadBtn.addEventListener('click', async (e) => {
+          e.stopPropagation(); // Prevent playing the track when clicking download
+          downloadBtn.disabled = true;
+          downloadBtn.textContent = '⏳'; // Indicate downloading
+          const success = await downloadAndStoreTrack(track);
+          if (success) {
+              alert(`"${track.title}" ${locale.downloadedAlert}`);
+          }
+          // Re-render playlist to update button visibility
+          // checkAllTracksDownloadStatus(); // This will also call renderPlaylist
+      });
+      item.appendChild(downloadBtn);
+
+      // Delete downloaded button
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-download-btn';
+      deleteBtn.setAttribute('aria-label', locale.deleteDownloadedTrack);
+      deleteBtn.textContent = '🗑️';
+      deleteBtn.style.display = 'none'; // Hidden by default
+      deleteBtn.addEventListener('click', async (e) => {
+          e.stopPropagation(); // Prevent playing the track when clicking delete
+          deleteBtn.disabled = true;
+          const success = await deleteStoredTrack(track);
+          if (success) {
+              alert(`"${track.title}" ${locale.deleteDownloadedAlert}`);
+          }
+          // Re-render playlist to update button visibility
+          // checkAllTracksDownloadStatus(); // This will also call renderPlaylist
+      });
+      item.appendChild(deleteBtn);
+
+      // Set initial button visibility based on isDownloaded status
+      if (track.isDownloaded) {
+        downloadBtn.style.display = 'none';
+        deleteBtn.style.display = 'block';
+      } else {
+        downloadBtn.style.display = 'block';
+        deleteBtn.style.display = 'none';
+      }
+
       // Click or keyboard to select
       item.addEventListener('click', () => {
-        playTrack(playlist.indexOf(track));
+        // If track is downloaded, play from offlineUrl, otherwise play from original URL
+        const urlToPlay = track.isDownloaded ? track.offlineUrl : track.url;
+        playTrack(playlist.indexOf(track), urlToPlay); // Pass URL to play
       });
       item.addEventListener('keydown', (e) => {
         if(e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          playTrack(playlist.indexOf(track));
+          const urlToPlay = track.isDownloaded ? track.offlineUrl : track.url;
+          playTrack(playlist.indexOf(track), urlToPlay);
         }
       });
 
@@ -521,13 +792,17 @@
   }
 
   // Load & play a track by index
-  function playTrack(idx) {
+  // Modify playTrack function to accept a URL to play
+  function playTrack(idx, urlToPlay = null) {
     if(idx < 0 || idx >= playlist.length) return;
 
     currentIndex = idx;
     const track = playlist[currentIndex];
-    audio.src = track.url;
-    audio.play().catch(() => {});
+    audio.src = urlToPlay || track.url; // Use provided URL or original URL
+    audio.play().catch((e) => {
+        console.error("Audio playback failed:", e);
+        alert("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
+    });
     isPlaying = true;
     updatePlayPauseButton();
     updateCoverArt(track.cover);
@@ -543,12 +818,12 @@
       do {
         nextIdx = Math.floor(Math.random() * playlist.length);
       } while (nextIdx === currentIndex && playlist.length > 1);
-      playTrack(nextIdx);
+      playTrack(nextIdx, playlist[nextIdx].isDownloaded ? playlist[nextIdx].offlineUrl : playlist[nextIdx].url);
     } else {
       if(currentIndex + 1 < playlist.length) {
-        playTrack(currentIndex + 1);
+        playTrack(currentIndex + 1, playlist[currentIndex + 1].isDownloaded ? playlist[currentIndex + 1].offlineUrl : playlist[currentIndex + 1].url);
       } else if(repeat) {
-        playTrack(0);
+        playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
       } else {
         pauseAudio();
       }
@@ -564,12 +839,12 @@
       do {
         prevIdx = Math.floor(Math.random() * playlist.length);
       } while (prevIdx === currentIndex && playlist.length > 1);
-      playTrack(prevIdx);
+      playTrack(prevIdx, playlist[prevIdx].isDownloaded ? playlist[prevIdx].offlineUrl : playlist[prevIdx].url);
     } else {
       if(currentIndex > 0) {
-        playTrack(currentIndex - 1);
+        playTrack(currentIndex - 1, playlist[currentIndex - 1].isDownloaded ? playlist[currentIndex - 1].offlineUrl : playlist[currentIndex - 1].url);
       } else if(repeat) {
-        playTrack(playlist.length - 1);
+        playTrack(playlist.length - 1, playlist[playlist.length - 1].isDownloaded ? playlist[playlist.length - 1].offlineUrl : playlist[playlist.length - 1].url);
       } else {
         pauseAudio();
       }
@@ -582,11 +857,14 @@
       pauseAudio();
     } else {
       if(currentIndex === -1 && playlist.length > 0) {
-        playTrack(0);
+        // If no track selected, play the first one, respecting download status
+        playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
+      } else if (currentIndex !== -1) {
+        // Play the currently selected track, respecting download status
+        playTrack(currentIndex, playlist[currentIndex].isDownloaded ? playlist[currentIndex].offlineUrl : playlist[currentIndex].url);
       } else {
-        audio.play().catch(() => {});
-        isPlaying = true;
-        updatePlayPauseButton();
+          // No tracks loaded, cannot play
+          console.log("No tracks available to play.");
       }
     }
   }
@@ -635,17 +913,17 @@
     repeatBtn.style.color = repeat ? 'var(--primary-color)' : '';
   }
 
-  // Play streaming URL
+  // Play streaming URL (no download support for this yet in current implementation)
   function playStream() {
     const url = streamUrlInput.value.trim();
     if(!url) return;
     audio.src = url;
     audio.play().catch(() => {});
     isPlaying = true;
-    currentIndex = -1;
+    currentIndex = -1; // Streaming doesn't tie to playlist
     updatePlayPauseButton();
     updateCoverArt(defaultCoverArt);
-    updatePlaylistActive();
+    updatePlaylistActive(); // Clear active state
   }
 
   // Export playlist to JSON file
@@ -654,7 +932,16 @@
       alert(locale.noSongsInPlaylist);
       return;
     }
-    const json = JSON.stringify(playlist, null, 2);
+    // Only export relevant track data, not the actual Blob
+    const exportablePlaylist = playlist.map(track => ({
+      title: track.title,
+      artist: track.artist,
+      url: track.url, // Original URL
+      cover: track.cover,
+      // Do not export offlineUrl or audioBlob
+    }));
+
+    const json = JSON.stringify(exportablePlaylist, null, 2);
     const blob = new Blob([json], {type: "application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -670,23 +957,32 @@
   function importPlaylistFromFile(file) {
     if(!file) return;
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => { // Make async to await checkAllTracksDownloadStatus
       try {
         const imported = JSON.parse(e.target.result);
         if(Array.isArray(imported)) {
-          // Basic validation
-          playlist = imported.filter(t => t.url);
+          // Basic validation and transformation to match track object structure
+          playlist = imported.map(t => ({
+              title: t.title || 'Unknown Title',
+              artist: t.artist || 'Unknown Artist',
+              url: t.url,
+              cover: t.cover || defaultCoverArt,
+              isDownloaded: false, // Reset download status on import
+              offlineUrl: null,
+          })).filter(t => t.url); // Ensure valid URL
           currentIndex = -1;
           isPlaying = false;
           audio.pause();
           audio.src = "";
           updateCoverArt(defaultCoverArt);
-          renderPlaylist();
+          // After rendering, check download status for imported tracks
+          await checkAllTracksDownloadStatus();
           updatePlayPauseButton();
         } else {
           alert(locale.importError);
         }
-      } catch {
+      } catch (error) {
+        console.error("Import playlist error:", error);
         alert(locale.importError);
       }
     };
@@ -716,7 +1012,8 @@
       const track = createTrackObject(file);
       playlist.push(track);
     });
-    renderPlaylist();
+    // After adding, check download status for new tracks
+    checkAllTracksDownloadStatus();
   }
 
   // Keyboard shortcuts
@@ -784,7 +1081,7 @@
 
       draw();
     } catch(e) {
-      console.warn("Visualizer not supported", e);
+      console.warn("Visualizer not supported or audio context could not be started.", e);
     }
   }
 
@@ -846,7 +1143,8 @@
     });
 
     updateCoverArt(defaultCoverArt);
-    renderPlaylist();
+    renderPlaylist(); // Initial render of the playlist (might be empty)
+    checkAllTracksDownloadStatus(); // Then check and update download status for all tracks
     setupVisualizer();
 
     // Service Worker Registration
