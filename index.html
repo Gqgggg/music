@@ -10,7 +10,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Music Player">
-<link rel="apple-touch-icon" href="/icons/icon-192x192.png"> <style>
+<link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+
+<style>
   /* Reset */
   * {
     box-sizing: border-box;
@@ -27,13 +29,13 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
-    padding: 20px;
+    padding: 20px; /* Overall padding around the player */
     min-height: 100vh;
   }
 
   #player-container {
     background: #1e1e1e;
-    width: 360px;
+    width: 360px; /* Fixed width for consistency, could be max-width for responsiveness */
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
     overflow: hidden;
@@ -42,17 +44,53 @@
     user-select: none;
   }
 
-  .controls {
+  /* Section Grouping Styles */
+  .section-group {
+    padding: 15px 20px; /* Consistent padding for content sections */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between elements within a group */
+    border-top: 1px solid #2a2a2a; /* Subtle separation */
+  }
+
+  .section-group:first-of-type {
+    border-top: none; /* No top border for the very first group */
+  }
+
+  .section-group h3 {
+    margin: 0 0 5px 0; /* Adjust heading margin */
+    color: var(--primary-color);
+    font-size: 1em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Cover Art & Controls */
+  #player-header {
+    background: #1e1e1e;
+  }
+
+  #cover-art {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 0 0 0 0; /* Remove bottom radius as it's part of header */
+    box-shadow: inset 0 0 40px #0008;
+    margin-bottom: 0; /* Remove margin, handled by container */
+    background: #2a2a2a;
+  }
+
+  #playback-controls {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 14px;
     padding: 15px 20px;
     background: #272727;
-    border-bottom: 1px solid #333;
+    border-top: 1px solid #333; /* Use border-top for separation from cover art */
   }
 
-  .controls button {
+  #playback-controls button {
     background: #333;
     border: none;
     border-radius: 50%;
@@ -67,9 +105,9 @@
     align-items: center;
   }
 
-  .controls button:hover,
-  .controls button:focus {
-    background-color: var(--primary-color); /* Use CSS variable */
+  #playback-controls button:hover,
+  #playback-controls button:focus {
+    background-color: var(--primary-color);
     outline: none;
   }
 
@@ -77,33 +115,52 @@
     width: 54px;
     height: 54px;
     font-size: 22px;
-    background: var(--primary-color); /* Use CSS variable */
-    box-shadow: 0 0 10px var(--primary-color)aa; /* Use CSS variable */
+    background: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color)aa;
   }
 
   #play-pause-btn:hover,
   #play-pause-btn:focus {
-    background: #ff4b3f; /* Keep a slightly different hover for the main button or make it a derived variable */
+    background: #ff4b3f;
     box-shadow: 0 0 14px #ff4b3fcc;
   }
 
-  #cover-art {
-    width: 100%;
-    aspect-ratio: 1/1;
-    object-fit: cover;
-    border-radius: 0 0 16px 16px;
-    box-shadow: inset 0 0 40px #0008;
-    margin-bottom: 8px;
-    background: #2a2a2a;
+  /* Main Features Section (Search & Playlist) */
+  #main-features {
+    background: #121212;
+    padding-top: 15px; /* Separate from controls */
+    padding-bottom: 0; /* Playlist will handle its own padding */
+  }
+
+  #search-input {
+    width: calc(100% - 40px); /* 100% minus 2x horizontal padding */
+    margin: 0 20px 15px 20px; /* Top margin for separation, no bottom margin */
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    background-color: #272727;
+    color: #eee;
+    outline: none;
+    transition: background-color 0.3s ease;
+  }
+
+  #search-input::placeholder {
+    color: #777;
+  }
+
+  #search-input:focus {
+    background-color: #3c3c3c;
   }
 
   #playlist {
-    max-height: 280px;
+    max-height: 280px; /* Keep max height for scrolling */
     overflow-y: auto;
     background: #121212;
-    padding: 8px 0;
+    padding: 8px 0; /* Vertical padding */
     scrollbar-width: thin;
-    scrollbar-color: var(--primary-color) #2a2a2a; /* Use CSS variable */
+    scrollbar-color: var(--primary-color) #2a2a2a;
+    border-top: 1px solid #2a2a2a; /* Separate from search */
   }
 
   #playlist::-webkit-scrollbar {
@@ -111,7 +168,7 @@
   }
 
   #playlist::-webkit-scrollbar-thumb {
-    background-color: var(--primary-color); /* Use CSS variable */
+    background-color: var(--primary-color);
     border-radius: 4px;
   }
 
@@ -119,7 +176,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 20px;
+    padding: 10px 20px; /* Horizontal padding for items */
     cursor: pointer;
     transition: background-color 0.25s ease;
     border-left: 4px solid transparent;
@@ -134,8 +191,8 @@
   }
 
   .playlist-item.active {
-    background-color: var(--primary-color); /* Use CSS variable */
-    border-left-color: #ff4433; /* Keep a slightly different border color or make it a derived variable */
+    background-color: var(--primary-color);
+    border-left-color: #ff4433;
     color: #fff;
   }
 
@@ -172,10 +229,10 @@
     text-overflow: ellipsis;
   }
 
-  /* New styles for download/delete buttons */
+  /* Download/Delete buttons */
   .download-btn,
   .delete-download-btn {
-    margin-left: auto; /* Push buttons to the right */
+    margin-left: auto;
     background: none;
     border: none;
     color: #eee;
@@ -183,18 +240,21 @@
     cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.2s ease;
-    padding: 5px; /* Add some padding for easier clicking */
+    padding: 5px;
     border-radius: 4px;
   }
 
   .download-btn:hover,
-  .delete-download-btn:hover {
+  .download-btn:focus,
+  .delete-download-btn:hover,
+  .delete-download-btn:focus {
     opacity: 1;
     background-color: rgba(255, 255, 255, 0.1);
+    outline: none;
   }
 
   .delete-download-btn {
-    color: #f00; /* Red for delete */
+    color: #f00;
   }
 
   .download-btn:disabled,
@@ -203,71 +263,60 @@
     opacity: 0.5;
   }
 
-  #search-input,
-  #stream-url-input {
-    width: calc(100% - 40px);
-    margin: 12px 20px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: none;
-    font-size: 14px;
-    background-color: #272727;
-    color: #eee;
-    outline: none;
-    transition: background-color 0.3s ease;
-  }
-
-  #search-input::placeholder,
-  #stream-url-input::placeholder {
-    color: #777;
-  }
-
-  #search-input:focus,
-  #stream-url-input:focus {
-    background-color: #3c3c3c;
-  }
-
-  #play-stream-btn,
-  #export-playlist-btn,
-  #import-playlist-btn,
-  #preload-all-btn, /* Added for preload button */
-  #mp3-converter-btn { /* Added for MP3 converter button */
-    margin: 0 20px 14px;
+  /* Action Buttons & Inputs (General Styling) */
+  .section-group input[type="url"],
+  .section-group button {
+    width: 100%; /* Make them fill their section group */
     padding: 10px;
-    width: calc(100% - 40px);
     border: none;
     border-radius: 10px;
-    background-color: var(--primary-color); /* Use CSS variable */
+    background-color: var(--primary-color);
     color: white;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.3s ease;
   }
 
-  #play-stream-btn:hover,
-  #export-playlist-btn:hover,
-  #import-playlist-btn:hover,
-  #preload-all-btn:hover, /* Added for preload button */
-  #mp3-converter-btn:hover, /* Added for MP3 converter button */
-  #play-stream-btn:focus,
-  #export-playlist-btn:focus,
-  #import-playlist-btn:focus,
-  #preload-all-btn:focus, /* Added for preload button */
-  #mp3-converter-btn:focus { /* Added for MP3 converter button */
-    background-color: #ff4433; /* Keep a slightly different hover or make it a derived variable */
+  .section-group input[type="url"] {
+    background-color: #272727; /* Override for input */
+    color: #eee;
+    font-weight: normal;
+  }
+
+  .section-group input[type="url"]::placeholder {
+    color: #777;
+  }
+
+  .section-group input[type="url"]:focus {
+    background-color: #3c3c3c;
+  }
+
+  .section-group button:hover,
+  .section-group button:focus {
+    background-color: #ff4433;
     outline: none;
   }
 
+  /* Visualizer */
   #visualizer {
     width: 100%;
     height: 60px;
     background: #181818;
-    border-top: 1px solid #333;
+    border-top: 1px solid #2a2a2a; /* Consistent border style */
+  }
+
+  /* Settings Section */
+  #settings-section {
+    display: flex;
+    flex-direction: row; /* Layout language and color picker horizontally */
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px; /* Space between select and picker */
   }
 
   #lang-select,
-  #theme-color-picker { /* Add theme color picker here for consistent styling */
-    margin: 10px 20px 20px;
+  #theme-color-picker {
+    flex-grow: 1; /* Allow them to grow and fill space */
     padding: 6px 10px;
     border-radius: 8px;
     background: #272727;
@@ -280,24 +329,26 @@
 
   #lang-select:hover,
   #lang-select:focus,
-  #theme-color-picker:hover, /* Add theme color picker here */
-  #theme-color-picker:focus { /* Add theme color picker here */
+  #theme-color-picker:hover,
+  #theme-color-picker:focus {
     background-color: #3c3c3c;
     outline: none;
   }
 
   /* Drag & Drop highlight */
   #player-container.dragover {
-    border: 3px dashed var(--primary-color); /* Use CSS variable */
+    border: 3px dashed var(--primary-color);
   }
 </style>
 </head>
 <body>
 <div id="player-container" role="main" aria-label="Music Player" tabindex="0">
 
-  <img id="cover-art" src="" alt="No track playing" />
+  <div id="player-header">
+    <img id="cover-art" src="" alt="No track playing" />
+  </div>
 
-  <div class="controls" role="region" aria-label="Playback controls">
+  <div id="playback-controls" role="region" aria-label="Playback controls">
     <button id="prev-btn" aria-label="Previous track" tabindex="0">⏮</button>
     <button id="play-pause-btn" aria-label="Play/Pause" tabindex="0">▶️</button>
     <button id="next-btn" aria-label="Next track" tabindex="0">⏭</button>
@@ -305,30 +356,48 @@
     <button id="repeat-btn" aria-pressed="false" aria-label="Repeat toggle" tabindex="0">🔁</button>
   </div>
 
-  <input id="search-input" type="search" placeholder="Search songs..." aria-label="Search songs" />
+  <div id="main-features" class="section-group">
+    <h3>Playlist</h3>
+    <input id="search-input" type="search" placeholder="Search songs..." aria-label="Search songs" />
+    <ul id="playlist" role="list" tabindex="0" aria-label="Playlist"></ul>
+  </div>
 
-  <ul id="playlist" role="list" tabindex="0" aria-label="Playlist"></ul>
+  <div id="action-buttons-group">
+    <div id="stream-section" class="section-group">
+      <h3>Stream Music</h3>
+      <input id="stream-url-input" type="url" placeholder="Enter streaming URL (mp3/aac)" aria-label="Streaming URL" />
+      <button id="play-stream-btn" aria-label="Play stream from URL">Play Stream</button>
+    </div>
 
-  <input id="stream-url-input" type="url" placeholder="Enter streaming URL (mp3/aac)" aria-label="Streaming URL" />
-  <button id="play-stream-btn" aria-label="Play stream from URL">Play Stream</button>
+    <div id="file-management-section" class="section-group">
+      <h3>File Management</h3>
+      <button id="add-music-btn" aria-label="Add songs from device">Add Songs from Device</button>
+      <input type="file" id="add-music-file-input" accept="audio/*" multiple hidden />
 
-  <button id="export-playlist-btn" aria-label="Export playlist">Export Playlist</button>
-  <button id="import-playlist-btn" aria-label="Import playlist">Import Playlist</button>
-  <input type="file" id="import-file-input" accept=".json" hidden />
+      <button id="export-playlist-btn" aria-label="Export playlist">Export Playlist</button>
+      <button id="import-playlist-btn" aria-label="Import playlist">Import Playlist</button>
+      <input type="file" id="import-file-input" accept=".json" hidden />
+    </div>
 
-  <button id="preload-all-btn" aria-label="Preload all music">Preload All Music</button>
-  <button id="mp3-converter-btn" aria-label="Go to MP3 Converter">Go to MP3 Converter</button>
+    <div id="tools-section" class="section-group">
+      <h3>Tools</h3>
+      <button id="preload-all-btn" aria-label="Preload all music">Preload All Music</button>
+      <button id="mp3-converter-btn" aria-label="Go to MP3 Converter">Go to MP3 Converter</button>
+    </div>
+  </div>
 
   <canvas id="visualizer" aria-hidden="true"></canvas>
 
-  <select id="lang-select" aria-label="Select language">
-    <option value="en" selected>English</option>
-    <option value="es">Español</option>
-    <option value="fr">Français</option>
-    <option value="de">Deutsch</option>
-  </select>
-
-  <input type="color" id="theme-color-picker" value="#ff6f61" aria-label="Choose theme color" />
+  <div id="settings-section" class="section-group">
+    <h3>Settings</h3>
+    <select id="lang-select" aria-label="Select language">
+      <option value="en" selected>English</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+    </select>
+    <input type="color" id="theme-color-picker" value="#ff6f61" aria-label="Choose theme color" />
+  </div>
 
 </div>
 
@@ -340,6 +409,7 @@
       searchPlaceholder: "Search songs...",
       streamPlaceholder: "Enter streaming URL (mp3/aac)",
       playStream: "Play Stream",
+      addMusic: "Add Songs from Device",
       exportPlaylist: "Export Playlist",
       importPlaylist: "Import Playlist",
       noTrack: "No track playing",
@@ -360,20 +430,28 @@
       downloadFailedAlert: "Failed to download music. See console for details.",
       deleteDownloadedAlert: "deleted from downloads.",
       deleteFailedAlert: "Failed to delete music. See console for details.",
-      mp3Converter: "Go to MP3 Converter", // New string
-      preloadAllMusic: "Preload All Music", // New string
-      preloadingAll: "Preloading all...", // New string
-      preloading: "Preloading", // New string
-      preloadComplete: "Preload complete!", // New string
-      of: "of", // New string
-      tracks: "tracks", // New string
-      failedToPreload: "failed to preload", // New string
-      noSongsInPlaylistToPreload: "No songs in playlist to preload.", // New string
+      mp3Converter: "Go to MP3 Converter",
+      preloadAllMusic: "Preload All Music",
+      preloadingAll: "Preloading all...",
+      preloading: "Preloading",
+      preloadComplete: "Preload complete!",
+      of: "of",
+      tracks: "tracks",
+      failedToPreload: "failed to preload",
+      noSongsInPlaylistToPreload: "No songs in playlist to preload.",
+
+      // New headings
+      playlistHeading: "Playlist",
+      streamMusicHeading: "Stream Music",
+      fileManagementHeading: "File Management",
+      toolsHeading: "Tools",
+      settingsHeading: "Settings",
     },
     es: {
       searchPlaceholder: "Buscar canciones...",
       streamPlaceholder: "Introduce URL de streaming (mp3/aac)",
       playStream: "Reproducir Streaming",
+      addMusic: "Añadir canciones del dispositivo",
       exportPlaylist: "Exportar Lista",
       importPlaylist: "Importar Lista",
       noTrack: "Ninguna canción reproducida",
@@ -394,20 +472,28 @@
       downloadFailedAlert: "Fallo al descargar la música. Ver consola para detalles.",
       deleteDownloadedAlert: "eliminado de las descargas.",
       deleteFailedAlert: "Fallo al eliminar la música. Ver consola para detalles.",
-      mp3Converter: "Ir al convertidor de MP3", // New string
-      preloadAllMusic: "Precargar toda la música", // New string
-      preloadingAll: "Precargando todo...", // New string
-      preloading: "Precargando", // New string
-      preloadComplete: "¡Precarga completa!", // New string
-      of: "de", // New string
-      tracks: "canciones", // New string
-      failedToPreload: "fallaron al precargar", // New string
-      noSongsInPlaylistToPreload: "No hay canciones en la lista para precargar.", // New string
+      mp3Converter: "Ir al convertidor de MP3",
+      preloadAllMusic: "Precargar toda la música",
+      preloadingAll: "Precargando todo...",
+      preloading: "Precargando",
+      preloadComplete: "¡Precarga completa!",
+      of: "de",
+      tracks: "canciones",
+      failedToPreload: "fallaron al precargar",
+      noSongsInPlaylistToPreload: "No hay canciones en la lista para precargar.",
+
+      // New headings
+      playlistHeading: "Lista de Reproducción",
+      streamMusicHeading: "Reproducir Música",
+      fileManagementHeading: "Gestión de Archivos",
+      toolsHeading: "Herramientas",
+      settingsHeading: "Configuración",
     },
     fr: {
       searchPlaceholder: "Rechercher des chansons...",
       streamPlaceholder: "Entrez l'URL de streaming (mp3/aac)",
       playStream: "Lire le flux",
+      addMusic: "Ajouter des chansons depuis l'appareil",
       exportPlaylist: "Exporter la liste",
       importPlaylist: "Importer la liste",
       noTrack: "Aucune piste en cours",
@@ -428,20 +514,28 @@
       downloadFailedAlert: "Échec du téléchargement de la musique. Voir la console pour plus de détails.",
       deleteDownloadedAlert: "supprimé des téléchargements.",
       deleteFailedAlert: "Échec de la suppression de la musique. Voir la console pour plus de détails.",
-      mp3Converter: "Aller au convertisseur MP3", // New string
-      preloadAllMusic: "Précharger toute la musique", // New string
-      preloadingAll: "Préchargement en cours...", // New string
-      preloading: "Préchargement", // New string
-      preloadComplete: "Préchargement terminé !", // New string
-      of: "de", // New string
-      tracks: "pistes", // New string
-      failedToPreload: "n'ont pas pu être préchargées", // New string
-      noSongsInPlaylistToPreload: "Aucune chanson dans la playlist à précharger.", // New string
+      mp3Converter: "Aller au convertisseur MP3",
+      preloadAllMusic: "Précharger toute la musique",
+      preloadingAll: "Préchargement en cours...",
+      preloading: "Préchargement",
+      preloadComplete: "Préchargement terminé !",
+      of: "de",
+      tracks: "pistes",
+      failedToPreload: "n'ont pas pu être préchargées",
+      noSongsInPlaylistToPreload: "Aucune chanson dans la playlist à précharger.",
+
+      // New headings
+      playlistHeading: "Liste de lecture",
+      streamMusicHeading: "Diffuser de la musique",
+      fileManagementHeading: "Gestion des fichiers",
+      toolsHeading: "Outils",
+      settingsHeading: "Paramètres",
     },
     de: {
       searchPlaceholder: "Songs suchen...",
       streamPlaceholder: "Streaming-URL eingeben (mp3/aac)",
       playStream: "Stream abspielen",
+      addMusic: "Songs vom Gerät hinzufügen",
       exportPlaylist: "Playlist exportieren",
       importPlaylist: "Playlist importieren",
       noTrack: "Kein Titel läuft",
@@ -462,15 +556,22 @@
       downloadFailedAlert: "Fehler beim Herunterladen der Musik. Details in der Konsole.",
       deleteDownloadedAlert: "aus Downloads gelöscht.",
       deleteFailedAlert: "Fehler beim Löschen der Musik. Details in der Konsole.",
-      mp3Converter: "Zum MP3-Konverter", // New string
-      preloadAllMusic: "Alle Musik vorladen", // New string
-      preloadingAll: "Lade alles vor...", // New string
-      preloading: "Vorladen", // New string
-      preloadComplete: "Vorladen abgeschlossen!", // New string
-      of: "von", // New string
-      tracks: "Titel", // New string
-      failedToPreload: "konnten nicht vorgeladen werden", // New string
-      noSongsInPlaylistToPreload: "Keine Titel in der Playlist zum Vorladen.", // New string
+      mp3Converter: "Zum MP3-Konverter",
+      preloadAllMusic: "Alle Musik vorladen",
+      preloadingAll: "Lade alles vor...",
+      preloading: "Vorladen",
+      preloadComplete: "Vorladen abgeschlossen!",
+      of: "von",
+      tracks: "Titel",
+      failedToPreload: "konnten nicht vorgeladen werden",
+      noSongsInPlaylistToPreload: "Keine Titel in der Playlist zum Vorladen.",
+
+      // New headings
+      playlistHeading: "Playlist",
+      streamMusicHeading: "Musik streamen",
+      fileManagementHeading: "Dateiverwaltung",
+      toolsHeading: "Werkzeuge",
+      settingsHeading: "Einstellungen",
     },
   };
 
@@ -486,14 +587,24 @@
   const searchInput = document.getElementById('search-input');
   const streamUrlInput = document.getElementById('stream-url-input');
   const playStreamBtn = document.getElementById('play-stream-btn');
+  const addMusicBtn = document.getElementById('add-music-btn');
+  const addMusicFileInput = document.getElementById('add-music-file-input');
   const exportPlaylistBtn = document.getElementById('export-playlist-btn');
   const importPlaylistBtn = document.getElementById('import-playlist-btn');
   const importFileInput = document.getElementById('import-file-input');
   const visualizerCanvas = document.getElementById('visualizer');
   const langSelect = document.getElementById('lang-select');
   const themeColorPicker = document.getElementById('theme-color-picker');
-  const mp3ConverterBtn = document.getElementById('mp3-converter-btn'); // New element
-  const preloadAllBtn = document.getElementById('preload-all-btn'); // New element
+  const mp3ConverterBtn = document.getElementById('mp3-converter-btn');
+  const preloadAllBtn = document.getElementById('preload-all-btn');
+
+  // New heading elements
+  const playlistHeading = document.querySelector('#main-features h3');
+  const streamMusicHeading = document.querySelector('#stream-section h3');
+  const fileManagementHeading = document.querySelector('#file-management-section h3');
+  const toolsHeading = document.querySelector('#tools-section h3');
+  const settingsHeading = document.querySelector('#settings-section h3');
+
 
   let locale = locales.en;
 
@@ -521,6 +632,7 @@
     searchInput.placeholder = locale.searchPlaceholder;
     streamUrlInput.placeholder = locale.streamPlaceholder;
     playStreamBtn.textContent = locale.playStream;
+    addMusicBtn.textContent = locale.addMusic;
     exportPlaylistBtn.textContent = locale.exportPlaylist;
     importPlaylistBtn.textContent = locale.importPlaylist;
     playPauseBtn.setAttribute('aria-label', locale.playPause);
@@ -530,8 +642,15 @@
     repeatBtn.setAttribute('aria-label', locale.repeat);
     playlistEl.setAttribute('aria-label', locale.playlist);
     langSelect.setAttribute('aria-label', locale.selectLang);
-    mp3ConverterBtn.textContent = locale.mp3Converter; // New: MP3 Converter button text
-    preloadAllBtn.textContent = locale.preloadAllMusic; // New: Preload All Music button text
+    mp3ConverterBtn.textContent = locale.mp3Converter;
+    preloadAllBtn.textContent = locale.preloadAllMusic;
+
+    // Update section headings
+    playlistHeading.textContent = locale.playlistHeading;
+    streamMusicHeading.textContent = locale.streamMusicHeading;
+    fileManagementHeading.textContent = locale.fileManagementHeading;
+    toolsHeading.textContent = locale.toolsHeading;
+    settingsHeading.textContent = locale.settingsHeading;
 
     if(currentIndex === -1) coverArt.alt = locale.noTrack;
   }
@@ -593,13 +712,10 @@
     }
     if (track.isDownloaded) {
         console.log(`Track "${track.title}" is already downloaded.`);
-        return true; // Already downloaded, consider it a success for this operation
+        return true;
     }
 
-    // Generate a unique ID for the track in IndexedDB based on original URL hash or a unique identifier
-    // For simplicity, let's use a combination of URL hash and timestamp
     const trackId = `track_${btoa(track.url).replace(/=/g, '')}_${Date.now()}`;
-
 
     try {
       const db = await openIndexedDB();
@@ -613,12 +729,11 @@
       const transaction = db.transaction([IDB_STORE_NAME], 'readwrite');
       const store = transaction.objectStore(IDB_STORE_NAME);
 
-      // Store the audio blob and original metadata
       const dataToStore = {
-        id: trackId, // Unique ID for IndexedDB
+        id: trackId,
         title: track.title,
         artist: track.artist,
-        originalUrl: track.url, // Keep original URL
+        originalUrl: track.url,
         audioBlob: audioBlob,
         mimeType: mimeType,
         cover: track.cover || defaultCoverArt,
@@ -626,12 +741,11 @@
 
       await store.add(dataToStore);
 
-      // Update the original playlist item to point to the IndexedDB URL
       const originalTrackIndex = playlist.findIndex(t => t.url === track.url);
       if (originalTrackIndex !== -1) {
-        playlist[originalTrackIndex].offlineUrl = `indexeddb://${trackId}`; // Custom URL scheme
+        playlist[originalTrackIndex].offlineUrl = `indexeddb://${trackId}`;
         playlist[originalTrackIndex].isDownloaded = true;
-        renderPlaylist(); // Re-render to update UI (e.g., show delete button)
+        renderPlaylist();
         return true;
       }
       return false;
@@ -651,7 +765,7 @@
           console.warn('Track is not an IndexedDB URL, cannot delete:', track.offlineUrl);
           return false;
       }
-      const trackId = urlObj.hostname; // The hostname is our ID
+      const trackId = urlObj.hostname;
 
       try {
           const db = await openIndexedDB();
@@ -660,12 +774,11 @@
 
           await store.delete(trackId);
 
-          // Update the original playlist item
           const originalTrackIndex = playlist.findIndex(t => t.offlineUrl === track.offlineUrl);
           if (originalTrackIndex !== -1) {
-              delete playlist[originalTrackIndex].offlineUrl; // Remove offline URL
+              delete playlist[originalTrackIndex].offlineUrl;
               playlist[originalTrackIndex].isDownloaded = false;
-              renderPlaylist(); // Re-render to update UI
+              renderPlaylist();
               return true;
           }
           return false;
@@ -685,14 +798,12 @@
       const transaction = db.transaction([IDB_STORE_NAME], 'readonly');
       const store = transaction.objectStore(IDB_STORE_NAME);
       
-      // Iterate through store to find matching originalUrl
       return new Promise((resolve) => {
         const request = store.openCursor();
         request.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
             if (cursor.value.originalUrl === track.url) {
-              // Update the playlist track's offlineUrl and isDownloaded status
               track.offlineUrl = `indexeddb://${cursor.value.id}`;
               track.isDownloaded = true;
               resolve(true);
@@ -716,15 +827,13 @@
 
   // Populate playlist with tracks and update download status
   async function checkAllTracksDownloadStatus() {
-    // We need to re-check all tracks, especially after loading a playlist
-    // This will update the `isDownloaded` and `offlineUrl` properties directly on `playlist` objects
     for (const track of playlist) {
       await isTrackDownloaded(track);
     }
-    renderPlaylist(); // Re-render after all statuses are updated
+    renderPlaylist();
   }
 
-  // New: Function to preload all tracks in the playlist
+  // Function to preload all tracks in the playlist
   async function preloadAllMusic() {
     if (playlist.length === 0) {
         alert(locale.noSongsInPlaylistToPreload);
@@ -738,24 +847,22 @@
     let failedCount = 0;
 
     for (const track of playlist) {
-        // Check if already downloaded to avoid re-downloading
         if (track.isDownloaded) {
             downloadedCount++;
             continue;
         }
 
-        const success = await downloadAndStoreTrack(track); // Use the existing download function
+        const success = await downloadAndStoreTrack(track);
         if (success) {
             downloadedCount++;
         } else {
             failedCount++;
         }
-        // Update button text to show progress
         preloadAllBtn.textContent = `${locale.preloading} (${downloadedCount}/${playlist.length})`;
     }
 
     preloadAllBtn.disabled = false;
-    preloadAllBtn.textContent = locale.preloadAllMusic; // Reset text
+    preloadAllBtn.textContent = locale.preloadAllMusic;
 
     let message = `${locale.preloadComplete} ${downloadedCount} ${locale.of} ${playlist.length} ${locale.tracks}.`;
     if (failedCount > 0) {
@@ -791,7 +898,7 @@
       const item = document.createElement('li');
       item.className = 'playlist-item';
       item.tabIndex = 0;
-      item.dataset.idx = playlist.indexOf(track); // store original index
+      item.dataset.idx = playlist.indexOf(track);
 
       if(playlist.indexOf(track) === currentIndex) {
         item.classList.add('active');
@@ -818,43 +925,36 @@
       item.appendChild(img);
       item.appendChild(titleArtist);
 
-      // Download button
       const downloadBtn = document.createElement('button');
       downloadBtn.className = 'download-btn';
       downloadBtn.setAttribute('aria-label', locale.downloadTrack);
       downloadBtn.textContent = '⬇️';
       downloadBtn.addEventListener('click', async (e) => {
-          e.stopPropagation(); // Prevent playing the track when clicking download
+          e.stopPropagation();
           downloadBtn.disabled = true;
-          downloadBtn.textContent = '⏳'; // Indicate downloading
+          downloadBtn.textContent = '⏳';
           const success = await downloadAndStoreTrack(track);
           if (success) {
               alert(`"${track.title}" ${locale.downloadedAlert}`);
           }
-          // Re-render playlist to update button visibility
-          // checkAllTracksDownloadStatus(); // This will also call renderPlaylist
       });
       item.appendChild(downloadBtn);
 
-      // Delete downloaded button
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'delete-download-btn';
       deleteBtn.setAttribute('aria-label', locale.deleteDownloadedTrack);
       deleteBtn.textContent = '🗑️';
-      deleteBtn.style.display = 'none'; // Hidden by default
+      deleteBtn.style.display = 'none';
       deleteBtn.addEventListener('click', async (e) => {
-          e.stopPropagation(); // Prevent playing the track when clicking delete
+          e.stopPropagation();
           deleteBtn.disabled = true;
           const success = await deleteStoredTrack(track);
           if (success) {
               alert(`"${track.title}" ${locale.deleteDownloadedAlert}`);
           }
-          // Re-render playlist to update button visibility
-          // checkAllTracksDownloadStatus(); // This will also call renderPlaylist
       });
       item.appendChild(deleteBtn);
 
-      // Set initial button visibility based on isDownloaded status
       if (track.isDownloaded) {
         downloadBtn.style.display = 'none';
         deleteBtn.style.display = 'block';
@@ -863,11 +963,9 @@
         deleteBtn.style.display = 'none';
       }
 
-      // Click or keyboard to select
       item.addEventListener('click', () => {
-        // If track is downloaded, play from offlineUrl, otherwise play from original URL
         const urlToPlay = track.isDownloaded ? track.offlineUrl : track.url;
-        playTrack(playlist.indexOf(track), urlToPlay); // Pass URL to play
+        playTrack(playlist.indexOf(track), urlToPlay);
       });
       item.addEventListener('keydown', (e) => {
         if(e.key === 'Enter' || e.key === ' ') {
@@ -882,13 +980,12 @@
   }
 
   // Load & play a track by index
-  // Modify playTrack function to accept a URL to play
   function playTrack(idx, urlToPlay = null) {
     if(idx < 0 || idx >= playlist.length) return;
 
     currentIndex = idx;
     const track = playlist[currentIndex];
-    audio.src = urlToPlay || track.url; // Use provided URL or original URL
+    audio.src = urlToPlay || track.url;
     audio.play().catch((e) => {
         console.error("Audio playback failed:", e);
         alert("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
@@ -947,13 +1044,10 @@
       pauseAudio();
     } else {
       if(currentIndex === -1 && playlist.length > 0) {
-        // If no track selected, play the first one, respecting download status
         playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
       } else if (currentIndex !== -1) {
-        // Play the currently selected track, respecting download status
         playTrack(currentIndex, playlist[currentIndex].isDownloaded ? playlist[currentIndex].offlineUrl : playlist[currentIndex].url);
       } else {
-          // No tracks loaded, cannot play
           console.log("No tracks available to play.");
       }
     }
@@ -983,7 +1077,6 @@
       item.classList.remove('active');
       if(parseInt(item.dataset.idx, 10) === currentIndex) {
         item.classList.add('active');
-        // Scroll into view smoothly
         item.scrollIntoView({behavior: 'smooth', block: 'nearest'});
       }
     });
@@ -1003,17 +1096,17 @@
     repeatBtn.style.color = repeat ? 'var(--primary-color)' : '';
   }
 
-  // Play streaming URL (no download support for this yet in current implementation)
+  // Play streaming URL
   function playStream() {
     const url = streamUrlInput.value.trim();
     if(!url) return;
     audio.src = url;
     audio.play().catch(() => {});
     isPlaying = true;
-    currentIndex = -1; // Streaming doesn't tie to playlist
+    currentIndex = -1;
     updatePlayPauseButton();
     updateCoverArt(defaultCoverArt);
-    updatePlaylistActive(); // Clear active state
+    updatePlaylistActive();
   }
 
   // Export playlist to JSON file
@@ -1022,13 +1115,11 @@
       alert(locale.noSongsInPlaylist);
       return;
     }
-    // Only export relevant track data, not the actual Blob
     const exportablePlaylist = playlist.map(track => ({
       title: track.title,
       artist: track.artist,
-      url: track.url, // Original URL
+      url: track.url,
       cover: track.cover,
-      // Do not export offlineUrl or audioBlob
     }));
 
     const json = JSON.stringify(exportablePlaylist, null, 2);
@@ -1047,25 +1138,23 @@
   function importPlaylistFromFile(file) {
     if(!file) return;
     const reader = new FileReader();
-    reader.onload = async e => { // Make async to await checkAllTracksDownloadStatus
+    reader.onload = async e => {
       try {
         const imported = JSON.parse(e.target.result);
         if(Array.isArray(imported)) {
-          // Basic validation and transformation to match track object structure
           playlist = imported.map(t => ({
               title: t.title || 'Unknown Title',
               artist: t.artist || 'Unknown Artist',
               url: t.url,
               cover: t.cover || defaultCoverArt,
-              isDownloaded: false, // Reset download status on import
+              isDownloaded: false,
               offlineUrl: null,
-          })).filter(t => t.url); // Ensure valid URL
+          })).filter(t => t.url);
           currentIndex = -1;
           isPlaying = false;
           audio.pause();
           audio.src = "";
           updateCoverArt(defaultCoverArt);
-          // After rendering, check download status for imported tracks
           await checkAllTracksDownloadStatus();
           updatePlayPauseButton();
         } else {
@@ -1077,6 +1166,20 @@
       }
     };
     reader.readAsText(file);
+  }
+
+  // Handle files selected via input[type="file"] or drag-and-drop
+  function handleFilesFromInput(files) {
+    const accepted = Array.from(files).filter(f => isSupportedFileType(f.name));
+    if (accepted.length === 0) {
+      alert(locale.fileNotSupported);
+      return;
+    }
+    accepted.forEach(file => {
+      const track = createTrackObject(file);
+      playlist.push(track);
+    });
+    checkAllTracksDownloadStatus(); // Re-render and check download status after adding new files
   }
 
   // Drag & drop handlers for files
@@ -1091,19 +1194,7 @@
   function onDrop(e) {
     e.preventDefault();
     container.classList.remove('dragover');
-    const files = Array.from(e.dataTransfer.files);
-    const accepted = files.filter(f => isSupportedFileType(f.name));
-    if(accepted.length === 0) {
-      alert(locale.fileNotSupported);
-      return;
-    }
-    // Add to playlist
-    accepted.forEach(file => {
-      const track = createTrackObject(file);
-      playlist.push(track);
-    });
-    // After adding, check download status for new tracks
-    checkAllTracksDownloadStatus();
+    handleFilesFromInput(e.dataTransfer.files); // Use the unified file handling
   }
 
   // Keyboard shortcuts
@@ -1161,7 +1252,6 @@
         let x = 0;
         for(let i = 0; i < bufferLength; i++) {
           const barHeight = dataArray[i] / 2;
-          // Get the current primary color from the CSS variable
           const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
           canvasCtx.fillStyle = primaryColor;
           canvasCtx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
@@ -1193,16 +1283,23 @@
     repeatBtn.addEventListener('click', toggleRepeat);
     searchInput.addEventListener('input', renderPlaylist);
     playStreamBtn.addEventListener('click', playStream);
+
+    addMusicBtn.addEventListener('click', () => addMusicFileInput.click());
+    addMusicFileInput.addEventListener('change', (e) => {
+      handleFilesFromInput(e.target.files);
+      addMusicFileInput.value = '';
+    });
+
     exportPlaylistBtn.addEventListener('click', exportPlaylist);
     importPlaylistBtn.addEventListener('click', () => importFileInput.click());
     importFileInput.addEventListener('change', e => {
       importPlaylistFromFile(e.target.files[0]);
       importFileInput.value = '';
     });
-    mp3ConverterBtn.addEventListener('click', () => { // New: MP3 Converter button
-        window.open('https://www.freeconvert.com/mp3-converter', '_blank'); // Opens in new tab
+    mp3ConverterBtn.addEventListener('click', () => {
+        window.open('https://www.freeconvert.com/mp3-converter', '_blank');
     });
-    preloadAllBtn.addEventListener('click', preloadAllMusic); // New: Preload All Music button
+    preloadAllBtn.addEventListener('click', preloadAllMusic);
 
     container.addEventListener('dragover', onDragOver);
     container.addEventListener('dragleave', onDragLeave);
@@ -1214,7 +1311,6 @@
     audio.addEventListener('play', () => {
       isPlaying = true;
       updatePlayPauseButton();
-      // Resume audio context if suspended
       if(audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
@@ -1237,8 +1333,8 @@
     });
 
     updateCoverArt(defaultCoverArt);
-    renderPlaylist(); // Initial render of the playlist (might be empty)
-    checkAllTracksDownloadStatus(); // Then check and update download status for all tracks
+    renderPlaylist();
+    checkAllTracksDownloadStatus();
     setupVisualizer();
 
     // Service Worker Registration
