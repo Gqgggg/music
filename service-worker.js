@@ -1,16 +1,25 @@
-const CACHE_NAME = 'music-player-cache-v1'; // Update version for new deployments
+const CACHE_NAME = 'music-player-cache-v2'; // Increment version to trigger update!
 const urlsToCache = [
-  '/', // Caches the index.html
+  '/', // Caches the root path, typically your index.html
   '/index.html',
-  // Since your CSS and JS are embedded, you primarily need to cache index.html.
-  // If you later externalize your CSS or JS, add their paths here.
-  // Example:
-  // '/styles/main.css',
-  // '/scripts/main.js',
+  '/manifest.json', // Add your manifest file
+  // Add all your icon paths as specified in manifest.json
+  '/icons/icon-72x72.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-128x128.png',
+  '/icons/icon-144x144.png',
+  '/icons/icon-152x152.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-384x384.png',
+  '/icons/icon-512x512.png',
+  // If you move your CSS or JS into separate files, add them here:
+  // '/css/style.css',
+  // '/js/main.js',
   // Any other static assets like images for default cover art if it's an external file
+  // '/img/default-cover.png',
 ];
 
-// Install event: This is where you pre-cache essential assets
+// Install event: This is where you pre-cache essential assets when the service worker is first installed.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -24,53 +33,58 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch event: Intercepts network requests
+// Fetch event: This intercepts network requests made by the page.
+// It tries to serve content from the cache first, then falls back to the network.
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request) // Try to find the request in the cache
+    caches.match(event.request) // Try to find the request in the current cache.
       .then((response) => {
-        // If resource is in cache, return it
+        // If the resource is in the cache, return it.
         if (response) {
           return response;
         }
-        // If not in cache, fetch from network
+
+        // If not in cache, fetch from the network.
         return fetch(event.request)
           .then((networkResponse) => {
-            // Check if we received a valid response
+            // Check if we received a valid response.
+            // This is important to avoid caching bad responses (e.g., 404s, network errors).
             if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
               return networkResponse;
             }
 
             // IMPORTANT: Clone the response. A response is a stream and can only be consumed once.
             // We must clone it so that we can consume the stream twice:
-            // one for the browser and one for the cache.
+            // one for the browser (to display the content) and one for the cache.
             const responseToCache = networkResponse.clone();
 
             caches.open(CACHE_NAME)
               .then((cache) => {
-                cache.put(event.request, responseToCache); // Cache the new resource
+                cache.put(event.request, responseToCache); // Add the newly fetched resource to the cache.
               });
 
-            return networkResponse;
+            return networkResponse; // Return the network response to the browser.
           })
           .catch(() => {
-            // This catch block is for network errors (e.g., offline)
-            // You could return a custom offline page here if you had one:
-            // return caches.match('/offline.html');
-            // For audio/streaming, a network failure will prevent playback.
-            // Consider how you want to handle this gracefully (e.g., UI message).
+            // This catch block handles network errors (e.g., when the user is completely offline).
+            // You can implement an offline fallback here, like returning a custom offline page.
+            // For example: return caches.match('/offline.html');
+            console.log('Service Worker: Fetch failed, request not in cache and network unavailable:', event.request.url);
           });
       })
   );
 });
 
-// Activate event: Clean up old caches to save space and prevent serving stale content
+// Activate event: This is triggered when the service worker becomes active.
+// It's commonly used to clean up old caches, ensuring users don't get stale content.
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
+  const cacheWhitelist = [CACHE_NAME]; // Only keep caches with names in this whitelist.
+
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
+          // If a cache name is not in the whitelist, delete it.
           if (cacheWhitelist.indexOf(cacheName) === -1) {
             console.log('Service Worker: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
