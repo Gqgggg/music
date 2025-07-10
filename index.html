@@ -10,6 +10,10 @@
     box-sizing: border-box;
   }
 
+  :root {
+    --primary-color: #ff6f61; /* Define a CSS variable for the primary color */
+  }
+
   body {
     margin: 0;
     background-color: #121212;
@@ -59,7 +63,7 @@
 
   .controls button:hover,
   .controls button:focus {
-    background-color: #ff6f61;
+    background-color: var(--primary-color); /* Use CSS variable */
     outline: none;
   }
 
@@ -67,13 +71,13 @@
     width: 54px;
     height: 54px;
     font-size: 22px;
-    background: #ff6f61;
-    box-shadow: 0 0 10px #ff6f61aa;
+    background: var(--primary-color); /* Use CSS variable */
+    box-shadow: 0 0 10px var(--primary-color)aa; /* Use CSS variable */
   }
 
   #play-pause-btn:hover,
   #play-pause-btn:focus {
-    background: #ff4b3f;
+    background: #ff4b3f; /* Keep a slightly different hover for the main button or make it a derived variable */
     box-shadow: 0 0 14px #ff4b3fcc;
   }
 
@@ -93,7 +97,7 @@
     background: #121212;
     padding: 8px 0;
     scrollbar-width: thin;
-    scrollbar-color: #ff6f61 #2a2a2a;
+    scrollbar-color: var(--primary-color) #2a2a2a; /* Use CSS variable */
   }
 
   #playlist::-webkit-scrollbar {
@@ -101,7 +105,7 @@
   }
 
   #playlist::-webkit-scrollbar-thumb {
-    background-color: #ff6f61;
+    background-color: var(--primary-color); /* Use CSS variable */
     border-radius: 4px;
   }
 
@@ -124,8 +128,8 @@
   }
 
   .playlist-item.active {
-    background-color: #ff6f61;
-    border-left-color: #ff4433;
+    background-color: var(--primary-color); /* Use CSS variable */
+    border-left-color: #ff4433; /* Keep a slightly different border color or make it a derived variable */
     color: #fff;
   }
 
@@ -194,7 +198,7 @@
     width: calc(100% - 40px);
     border: none;
     border-radius: 10px;
-    background-color: #ff6f61;
+    background-color: var(--primary-color); /* Use CSS variable */
     color: white;
     font-weight: 600;
     cursor: pointer;
@@ -207,7 +211,7 @@
   #play-stream-btn:focus,
   #export-playlist-btn:focus,
   #import-playlist-btn:focus {
-    background-color: #ff4433;
+    background-color: #ff4433; /* Keep a slightly different hover or make it a derived variable */
     outline: none;
   }
 
@@ -218,7 +222,8 @@
     border-top: 1px solid #333;
   }
 
-  #lang-select {
+  #lang-select,
+  #theme-color-picker { /* Add theme color picker here for consistent styling */
     margin: 10px 20px 20px;
     padding: 6px 10px;
     border-radius: 8px;
@@ -231,14 +236,16 @@
   }
 
   #lang-select:hover,
-  #lang-select:focus {
+  #lang-select:focus,
+  #theme-color-picker:hover, /* Add theme color picker here */
+  #theme-color-picker:focus { /* Add theme color picker here */
     background-color: #3c3c3c;
     outline: none;
   }
 
   /* Drag & Drop highlight */
   #player-container.dragover {
-    border: 3px dashed #ff6f61;
+    border: 3px dashed var(--primary-color); /* Use CSS variable */
   }
 </style>
 </head>
@@ -274,6 +281,8 @@
     <option value="fr">Français</option>
     <option value="de">Deutsch</option>
   </select>
+
+  <input type="color" id="theme-color-picker" value="#ff6f61" aria-label="Choose theme color" />
 
 </div>
 
@@ -376,6 +385,7 @@
   const importFileInput = document.getElementById('import-file-input');
   const visualizerCanvas = document.getElementById('visualizer');
   const langSelect = document.getElementById('lang-select');
+  const themeColorPicker = document.getElementById('theme-color-picker'); // New element
 
   let locale = locales.en;
 
@@ -392,7 +402,7 @@
   let audioCtx, analyser, source, dataArray, animationId;
 
   // Helper: default cover art SVG as base64 data URI
-  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDUwIDUwIiBmaWxsPSIjNjY2NjY2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI2NjY2NjYyIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYgNiIgc3Ryb2tlPSIjNDA0MDA0IiBzdHJva2Utd2lkdGg9IjUiLz4KPHBhdGggZD0iTTI1IDE1bDYgNi02IDZtMCAxMmw2IDZtLTYtNi02IDYiIGZpbGw9IiM3NzdmN2YiLz4KPC9zdmc+`;
+  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDUwIDUwIiBmaWxsPSIjNjY2NjY2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI2NjY2NjYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNiA2IiBzdHJva2U9IiM0MDQwNDAiIHN0cm9rZS13aWR0aD0iNSIvPgo8cGF0aCBkPSJNMjUgMTVsNiA2LTYgNm0wIDEwbDYgNm0tNi02LTYgNiIgZmlsbD0iIzc3N2Y3ZiIvPgo8L3N2Zz4=`;
 
   // Set default UI text based on locale
   function updateLocaleTexts() {
@@ -609,14 +619,14 @@
   function toggleShuffle() {
     shuffle = !shuffle;
     shuffleBtn.setAttribute('aria-pressed', shuffle);
-    shuffleBtn.style.color = shuffle ? '#ff6f61' : '';
+    shuffleBtn.style.color = shuffle ? 'var(--primary-color)' : ''; // Use CSS variable
   }
 
   // Repeat toggle
   function toggleRepeat() {
     repeat = !repeat;
     repeatBtn.setAttribute('aria-pressed', repeat);
-    repeatBtn.style.color = repeat ? '#ff6f61' : '';
+    repeatBtn.style.color = repeat ? 'var(--primary-color)' : ''; // Use CSS variable
   }
 
   // Play streaming URL
@@ -758,10 +768,11 @@
         let x = 0;
         for(let i = 0; i < bufferLength; i++) {
           const barHeight = dataArray[i] / 2;
-          const r = barHeight + 25;
-          const g = 50;
-          const b = 100;
-          canvasCtx.fillStyle = `rgb(${r},${g},${b})`;
+          // Get the current primary color from the CSS variable
+          const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+          // For a simple visualization, you could use parts of the primary color or a fixed color
+          // Here, we'll just make the bars related to the primary color in a simple way
+          canvasCtx.fillStyle = primaryColor;
           canvasCtx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
           x += barWidth + 1;
         }
@@ -826,6 +837,15 @@
       renderPlaylist();
     });
 
+    // Event listener for the theme color picker
+    themeColorPicker.addEventListener('input', (e) => {
+      document.documentElement.style.setProperty('--primary-color', e.target.value);
+      // Re-render playlist to update active item color if needed
+      updatePlaylistActive();
+      // Potentially update visualizer if its colors depend on the primary color dynamically
+      // For this simple visualizer, it will pick up the new color on next draw cycle.
+    });
+
     updateCoverArt(defaultCoverArt);
     renderPlaylist();
     setupVisualizer();
@@ -837,3 +857,4 @@
 </script>
 </body>
 </html>
+```
