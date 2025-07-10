@@ -229,7 +229,9 @@
 
   #play-stream-btn,
   #export-playlist-btn,
-  #import-playlist-btn {
+  #import-playlist-btn,
+  #preload-all-btn, /* Added for preload button */
+  #mp3-converter-btn { /* Added for MP3 converter button */
     margin: 0 20px 14px;
     padding: 10px;
     width: calc(100% - 40px);
@@ -245,9 +247,13 @@
   #play-stream-btn:hover,
   #export-playlist-btn:hover,
   #import-playlist-btn:hover,
+  #preload-all-btn:hover, /* Added for preload button */
+  #mp3-converter-btn:hover, /* Added for MP3 converter button */
   #play-stream-btn:focus,
   #export-playlist-btn:focus,
-  #import-playlist-btn:focus {
+  #import-playlist-btn:focus,
+  #preload-all-btn:focus, /* Added for preload button */
+  #mp3-converter-btn:focus { /* Added for MP3 converter button */
     background-color: #ff4433; /* Keep a slightly different hover or make it a derived variable */
     outline: none;
   }
@@ -310,6 +316,9 @@
   <button id="import-playlist-btn" aria-label="Import playlist">Import Playlist</button>
   <input type="file" id="import-file-input" accept=".json" hidden />
 
+  <button id="preload-all-btn" aria-label="Preload all music">Preload All Music</button>
+  <button id="mp3-converter-btn" aria-label="Go to MP3 Converter">Go to MP3 Converter</button>
+
   <canvas id="visualizer" aria-hidden="true"></canvas>
 
   <select id="lang-select" aria-label="Select language">
@@ -351,6 +360,15 @@
       downloadFailedAlert: "Failed to download music. See console for details.",
       deleteDownloadedAlert: "deleted from downloads.",
       deleteFailedAlert: "Failed to delete music. See console for details.",
+      mp3Converter: "Go to MP3 Converter", // New string
+      preloadAllMusic: "Preload All Music", // New string
+      preloadingAll: "Preloading all...", // New string
+      preloading: "Preloading", // New string
+      preloadComplete: "Preload complete!", // New string
+      of: "of", // New string
+      tracks: "tracks", // New string
+      failedToPreload: "failed to preload", // New string
+      noSongsInPlaylistToPreload: "No songs in playlist to preload.", // New string
     },
     es: {
       searchPlaceholder: "Buscar canciones...",
@@ -376,6 +394,15 @@
       downloadFailedAlert: "Fallo al descargar la música. Ver consola para detalles.",
       deleteDownloadedAlert: "eliminado de las descargas.",
       deleteFailedAlert: "Fallo al eliminar la música. Ver consola para detalles.",
+      mp3Converter: "Ir al convertidor de MP3", // New string
+      preloadAllMusic: "Precargar toda la música", // New string
+      preloadingAll: "Precargando todo...", // New string
+      preloading: "Precargando", // New string
+      preloadComplete: "¡Precarga completa!", // New string
+      of: "de", // New string
+      tracks: "canciones", // New string
+      failedToPreload: "fallaron al precargar", // New string
+      noSongsInPlaylistToPreload: "No hay canciones en la lista para precargar.", // New string
     },
     fr: {
       searchPlaceholder: "Rechercher des chansons...",
@@ -401,6 +428,15 @@
       downloadFailedAlert: "Échec du téléchargement de la musique. Voir la console pour plus de détails.",
       deleteDownloadedAlert: "supprimé des téléchargements.",
       deleteFailedAlert: "Échec de la suppression de la musique. Voir la console pour plus de détails.",
+      mp3Converter: "Aller au convertisseur MP3", // New string
+      preloadAllMusic: "Précharger toute la musique", // New string
+      preloadingAll: "Préchargement en cours...", // New string
+      preloading: "Préchargement", // New string
+      preloadComplete: "Préchargement terminé !", // New string
+      of: "de", // New string
+      tracks: "pistes", // New string
+      failedToPreload: "n'ont pas pu être préchargées", // New string
+      noSongsInPlaylistToPreload: "Aucune chanson dans la playlist à précharger.", // New string
     },
     de: {
       searchPlaceholder: "Songs suchen...",
@@ -426,6 +462,15 @@
       downloadFailedAlert: "Fehler beim Herunterladen der Musik. Details in der Konsole.",
       deleteDownloadedAlert: "aus Downloads gelöscht.",
       deleteFailedAlert: "Fehler beim Löschen der Musik. Details in der Konsole.",
+      mp3Converter: "Zum MP3-Konverter", // New string
+      preloadAllMusic: "Alle Musik vorladen", // New string
+      preloadingAll: "Lade alles vor...", // New string
+      preloading: "Vorladen", // New string
+      preloadComplete: "Vorladen abgeschlossen!", // New string
+      of: "von", // New string
+      tracks: "Titel", // New string
+      failedToPreload: "konnten nicht vorgeladen werden", // New string
+      noSongsInPlaylistToPreload: "Keine Titel in der Playlist zum Vorladen.", // New string
     },
   };
 
@@ -447,6 +492,8 @@
   const visualizerCanvas = document.getElementById('visualizer');
   const langSelect = document.getElementById('lang-select');
   const themeColorPicker = document.getElementById('theme-color-picker');
+  const mp3ConverterBtn = document.getElementById('mp3-converter-btn'); // New element
+  const preloadAllBtn = document.getElementById('preload-all-btn'); // New element
 
   let locale = locales.en;
 
@@ -483,6 +530,9 @@
     repeatBtn.setAttribute('aria-label', locale.repeat);
     playlistEl.setAttribute('aria-label', locale.playlist);
     langSelect.setAttribute('aria-label', locale.selectLang);
+    mp3ConverterBtn.textContent = locale.mp3Converter; // New: MP3 Converter button text
+    preloadAllBtn.textContent = locale.preloadAllMusic; // New: Preload All Music button text
+
     if(currentIndex === -1) coverArt.alt = locale.noTrack;
   }
 
@@ -672,6 +722,46 @@
       await isTrackDownloaded(track);
     }
     renderPlaylist(); // Re-render after all statuses are updated
+  }
+
+  // New: Function to preload all tracks in the playlist
+  async function preloadAllMusic() {
+    if (playlist.length === 0) {
+        alert(locale.noSongsInPlaylistToPreload);
+        return;
+    }
+
+    preloadAllBtn.disabled = true;
+    preloadAllBtn.textContent = locale.preloadingAll;
+
+    let downloadedCount = 0;
+    let failedCount = 0;
+
+    for (const track of playlist) {
+        // Check if already downloaded to avoid re-downloading
+        if (track.isDownloaded) {
+            downloadedCount++;
+            continue;
+        }
+
+        const success = await downloadAndStoreTrack(track); // Use the existing download function
+        if (success) {
+            downloadedCount++;
+        } else {
+            failedCount++;
+        }
+        // Update button text to show progress
+        preloadAllBtn.textContent = `${locale.preloading} (${downloadedCount}/${playlist.length})`;
+    }
+
+    preloadAllBtn.disabled = false;
+    preloadAllBtn.textContent = locale.preloadAllMusic; // Reset text
+
+    let message = `${locale.preloadComplete} ${downloadedCount} ${locale.of} ${playlist.length} ${locale.tracks}.`;
+    if (failedCount > 0) {
+        message += ` ${failedCount} ${locale.failedToPreload}.`;
+    }
+    alert(message);
   }
 
 
@@ -1109,6 +1199,10 @@
       importPlaylistFromFile(e.target.files[0]);
       importFileInput.value = '';
     });
+    mp3ConverterBtn.addEventListener('click', () => { // New: MP3 Converter button
+        window.open('https://www.freeconvert.com/mp3-converter', '_blank'); // Opens in new tab
+    });
+    preloadAllBtn.addEventListener('click', preloadAllMusic); // New: Preload All Music button
 
     container.addEventListener('dragover', onDragOver);
     container.addEventListener('dragleave', onDragLeave);
