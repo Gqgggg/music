@@ -439,7 +439,7 @@
       tracks: "tracks",
       failedToPreload: "failed to preload",
       noSongsInPlaylistToPreload: "No songs in playlist to preload.",
-
+      autoplayBlocked: "Autoplay blocked. Please tap play or select a song.", // New message for autoplay
       // New headings
       playlistHeading: "Playlist",
       streamMusicHeading: "Stream Music",
@@ -481,6 +481,7 @@
       tracks: "canciones",
       failedToPreload: "fallaron al precargar",
       noSongsInPlaylistToPreload: "No hay canciones en la lista para precargar.",
+      autoplayBlocked: "Autoplay bloqueado. Toca reproducir o selecciona una canción.", // New message for autoplay
 
       // New headings
       playlistHeading: "Lista de Reproducción",
@@ -523,6 +524,7 @@
       tracks: "pistes",
       failedToPreload: "n'ont pas pu être préchargées",
       noSongsInPlaylistToPreload: "Aucune chanson dans la playlist à précharger.",
+      autoplayBlocked: "Autoplay bloqué. Veuillez appuyer sur lecture ou sélectionner une chanson.", // New message for autoplay
 
       // New headings
       playlistHeading: "Liste de lecture",
@@ -565,6 +567,7 @@
       tracks: "Titel",
       failedToPreload: "konnten nicht vorgeladen werden",
       noSongsInPlaylistToPreload: "Keine Titel in der Playlist zum Vorladen.",
+      autoplayBlocked: "Autoplay blockiert. Bitte auf Play tippen oder einen Song auswählen.", // New message for autoplay
 
       // New headings
       playlistHeading: "Playlist",
@@ -986,14 +989,24 @@
     currentIndex = idx;
     const track = playlist[currentIndex];
     audio.src = urlToPlay || track.url;
-    audio.play().catch((e) => {
-        console.error("Audio playback failed:", e);
-        alert("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
-    });
-    isPlaying = true;
-    updatePlayPauseButton();
-    updateCoverArt(track.cover);
-    updatePlaylistActive();
+    audio.play()
+      .then(() => {
+        isPlaying = true;
+        updatePlayPauseButton();
+        updateCoverArt(track.cover);
+        updatePlaylistActive();
+      })
+      .catch((error) => {
+        isPlaying = false; // Ensure UI reflects paused state
+        updatePlayPauseButton();
+        console.error("Audio playback failed:", error);
+        // More specific error message for autoplay
+        if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
+          alert(locale.autoplayBlocked);
+        } else {
+          alert("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
+        }
+      });
   }
 
   // Play next track
@@ -1044,8 +1057,10 @@
       pauseAudio();
     } else {
       if(currentIndex === -1 && playlist.length > 0) {
+        // If no song is selected, try to play the first one
         playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
       } else if (currentIndex !== -1) {
+        // If a song is selected, try to resume it
         playTrack(currentIndex, playlist[currentIndex].isDownloaded ? playlist[currentIndex].offlineUrl : playlist[currentIndex].url);
       } else {
           console.log("No tracks available to play.");
@@ -1100,13 +1115,16 @@
   function playStream() {
     const url = streamUrlInput.value.trim();
     if(!url) return;
-    audio.src = url;
-    audio.play().catch(() => {});
-    isPlaying = true;
-    currentIndex = -1;
-    updatePlayPauseButton();
-    updateCoverArt(defaultCoverArt);
-    updatePlaylistActive();
+    // Call playTrack with the streaming URL as a new track object
+    const streamTrack = createTrackObject(url);
+    // Add stream track to playlist if not already there, or play if it is
+    const existingIndex = playlist.findIndex(t => t.url === url);
+    if (existingIndex === -1) {
+        playlist.push(streamTrack);
+        playTrack(playlist.length - 1);
+    } else {
+        playTrack(existingIndex);
+    }
   }
 
   // Export playlist to JSON file
@@ -1120,6 +1138,7 @@
       artist: track.artist,
       url: track.url,
       cover: track.cover,
+      // Do not export isDownloaded and offlineUrl as they are runtime/local cache specific
     }));
 
     const json = JSON.stringify(exportablePlaylist, null, 2);
@@ -1142,21 +1161,24 @@
       try {
         const imported = JSON.parse(e.target.result);
         if(Array.isArray(imported)) {
+          // Clear existing playlist and add imported tracks
           playlist = imported.map(t => ({
               title: t.title || 'Unknown Title',
               artist: t.artist || 'Unknown Artist',
               url: t.url,
               cover: t.cover || defaultCoverArt,
-              isDownloaded: false,
-              offlineUrl: null,
-          })).filter(t => t.url);
-          currentIndex = -1;
+              isDownloaded: false, // Reset download status for imported tracks
+              offlineUrl: null,    // Reset offline URL
+          })).filter(t => t.url); // Ensure tracks have a URL
+
+          currentIndex = -1; // Reset current playing track
           isPlaying = false;
           audio.pause();
           audio.src = "";
           updateCoverArt(defaultCoverArt);
-          await checkAllTracksDownloadStatus();
+          await checkAllTracksDownloadStatus(); // Check download status for imported tracks
           updatePlayPauseButton();
+          renderPlaylist(); // Render the newly imported playlist
         } else {
           alert(locale.importError);
         }
@@ -1228,7 +1250,7 @@
   // Visualizer setup
   function setupVisualizer() {
     try {
-      audioCtx = new AudioContext();
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // Use webkitAudioContext for broader compatibility
       analyser = audioCtx.createAnalyser();
       source = audioCtx.createMediaElementSource(audio);
       source.connect(analyser);
@@ -1238,6 +1260,7 @@
       dataArray = new Uint8Array(bufferLength);
 
       const canvasCtx = visualizerCanvas.getContext('2d');
+      // Set canvas dimensions dynamically based on client size
       const WIDTH = visualizerCanvas.width = visualizerCanvas.clientWidth;
       const HEIGHT = visualizerCanvas.height = visualizerCanvas.clientHeight;
 
@@ -1308,11 +1331,12 @@
     window.addEventListener('keydown', onKeyDown);
 
     audio.addEventListener('ended', playNext);
+    // audio.addEventListener('play') and 'pause' listeners now largely handled by playTrack promise
     audio.addEventListener('play', () => {
       isPlaying = true;
       updatePlayPauseButton();
       if(audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
+        audioCtx.resume().catch(e => console.error("Failed to resume AudioContext:", e));
       }
     });
     audio.addEventListener('pause', () => {
@@ -1333,8 +1357,14 @@
     });
 
     updateCoverArt(defaultCoverArt);
-    renderPlaylist();
-    checkAllTracksDownloadStatus();
+    // Ensure playlist is rendered and download status checked before attempting autoplay
+    checkAllTracksDownloadStatus().then(() => {
+      if (playlist.length > 0) {
+        // Attempt to autoplay the first track
+        playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
+      }
+    });
+
     setupVisualizer();
 
     // Service Worker Registration
