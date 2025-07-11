@@ -342,18 +342,6 @@
     color: var(--text-color);
   }
 
-  /* Dragging feedback */
-  .playlist-item.dragging {
-    opacity: 0.5;
-    border: 2px dashed var(--primary-color);
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-  }
-
-  .playlist-item.drag-over-placeholder {
-    border-top: 2px solid var(--primary-color);
-    padding-top: 12px; /* Adjust padding to make space for the line */
-  }
-
 
   .playlist-item img {
     width: 40px; /* Slightly larger image */
@@ -479,8 +467,7 @@
   /* Action Buttons & Inputs (General Styling) */
   .features-group input[type="url"],
   .features-group button,
-  .library-filter-nav button,
-  #playback-speed-select { /* Added playback-speed-select */
+  .library-filter-nav button { /* Added library filter buttons */
     width: 100%;
     padding: 10px;
     border: none;
@@ -493,8 +480,7 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Button shadows */
   }
 
-  .features-group input[type="url"],
-  #playback-speed-select { /* Added playback-speed-select */
+  .features-group input[type="url"] {
     background-color: var(--background-light);
     color: var(--text-color);
     font-weight: normal;
@@ -505,8 +491,7 @@
     color: #777;
   }
 
-  .features-group input[type="url"]:focus,
-  #playback-speed-select:focus { /* Added playback-speed-select */
+  .features-group input[type="url"]:focus {
     background-color: #3c3c3c;
     box-shadow: 0 0 0 2px var(--primary-color), inset 0 1px 3px rgba(0,0,0,0.3);
   }
@@ -864,19 +849,6 @@
     <input type="color" id="theme-color-picker" value="#ff6f61" aria-label="Choose theme color" />
   </div>
 
-  <!-- New: Playback Speed Control -->
-  <div class="features-group">
-      <h3>Playback Speed</h3>
-      <select id="playback-speed-select" aria-label="Select playback speed">
-          <option value="0.5">0.5x</option>
-          <option value="0.75">0.75x</option>
-          <option value="1" selected>1x (Normal)</option>
-          <option value="1.25">1.25x</option>
-          <option value="1.5">1.5x</option>
-          <option value="2">2x</option>
-      </select>
-  </div>
-
 </div>
 
 <script>
@@ -1149,7 +1121,6 @@
   const themeColorPicker = document.getElementById('theme-color-picker');
   const mp3ConverterBtn = document.getElementById('mp3-converter-btn');
   const preloadAllBtn = document.getElementById('preload-all-btn');
-  const playbackSpeedSelect = document.getElementById('playback-speed-select'); // New: Playback Speed Select
 
   const currentSongTitleEl = document.getElementById('current-song-title');
   const currentSongArtistEl = document.getElementById('current-song-artist');
@@ -1205,10 +1176,9 @@
   const IDB_DATABASE_NAME = 'music-db';
   const IDB_STORE_NAME = 'tracks';
   const LOCAL_STORAGE_PLAYLIST_KEY = 'musicPlayerPlaylist'; // Key for localStorage
-  const LOCAL_STORAGE_PLAYBACK_SPEED_KEY = 'musicPlayerPlaybackSpeed'; // New: Key for playback speed
 
   // Helper: default cover art SVG as base64 data URI
-  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAtNTAgNTAtNTAiIGZpbGw9IiM2NjY2NjYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yNSAxNWw2IDYtNiA2bTAgMTBsNiA2bS02LTYtNiA2IiBmaWxsPSIjNzc3ZjdmIi8+CjwvYXN2Zz4=`;
+  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAMDUwIDUwIiBmaWxsPSIjNjY2NjY2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI2NjY2NjY2MiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYgNiIiIHN0cm9rZT0iIzQwNDA0MCIgc3Ryb2tlLXdpZHRoPSI1Ii8+CjxwYXRoIGQ9Ik0yNSAxNWw2IDYtNiA2bTAgMTBsNiA2bS02LTYtNiA2IiBmaWxsPSIjNzc3ZjdmIi8+CjwvYXN2Zz4=`;
 
   // Set default UI text based on locale
   function updateLocaleTexts() {
@@ -1348,8 +1318,7 @@
       return false;
     } catch (error) {
       console.error('Error downloading and storing track:', error);
-      // alert(`${locale.downloadFailedAlert}`); // Use custom modal instead of alert
-      console.log(`${locale.downloadFailedAlert}`);
+      alert(`${locale.downloadFailedAlert}`);
       return false;
     }
   }
@@ -1383,8 +1352,7 @@
           return false;
       } catch (error) {
           console.error('Error deleting track from IndexedDB:', error);
-          // alert(`${locale.deleteFailedAlert}`); // Use custom modal instead of alert
-          console.log(`${locale.deleteFailedAlert}`);
+          alert(`${locale.deleteFailedAlert}`);
           return false;
       }
   }
@@ -1432,8 +1400,7 @@
   // Function to preload all tracks in the playlist
   async function preloadAllMusic() {
     if (playlist.length === 0) {
-        // alert(locale.noSongsInPlaylistToPreload); // Use custom modal instead of alert
-        console.log(locale.noSongsInPlaylistToPreload);
+        alert(locale.noSongsInPlaylistToPreload);
         return;
     }
 
@@ -1465,8 +1432,7 @@
     if (failedCount > 0) {
         message += ` ${failedCount} ${locale.failedToPreload}.`;
     }
-    // alert(message); // Use custom modal instead of alert
-    console.log(message);
+    alert(message);
   }
 
   // --- Playlist Persistence (LocalStorage) ---
@@ -1578,7 +1544,6 @@
         item.tabIndex = 0;
         item.dataset.originalIdx = originalIndex; // Store original index for operations
         item.dataset.trackId = track.id; // Store unique ID for direct lookup
-        item.draggable = true; // Enable drag for reordering
 
         if(originalIndex === currentIndex) {
             item.classList.add('active');
@@ -1617,8 +1582,7 @@
             downloadBtn.textContent = '⏳';
             const success = await downloadAndStoreTrack(track);
             if (success) {
-                // alert(`"${track.title}" ${locale.downloadedAlert}`); // Use custom modal instead of alert
-                console.log(`"${track.title}" ${locale.downloadedAlert}`);
+                alert(`"${track.title}" ${locale.downloadedAlert}`);
             }
             downloadBtn.disabled = false;
             renderPlaylist(); // Re-render to update button state
@@ -1635,8 +1599,7 @@
             deleteDownloadBtn.disabled = true;
             const success = await deleteStoredTrack(track);
             if (success) {
-                // alert(`"${track.title}" ${locale.deleteDownloadedAlert}`); // Use custom modal instead of alert
-                console.log(`"${track.title}" ${locale.deleteDownloadedAlert}`);
+                alert(`"${track.title}" ${locale.deleteDownloadedAlert}`);
             }
             deleteDownloadBtn.disabled = false;
             renderPlaylist(); // Re-render to update button state
@@ -1752,11 +1715,9 @@
         console.error("Audio playback failed:", error);
         // More specific error message for autoplay
         if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
-          // alert(locale.autoplayBlocked); // Use custom modal instead of alert
-          console.log(locale.autoplayBlocked);
+          alert(locale.autoplayBlocked);
         } else {
-          // alert("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first."); // Use custom modal
-          console.log("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
+          alert("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
         }
       });
   }
@@ -1947,8 +1908,7 @@
   // Export playlist to JSON file
   function exportPlaylist() {
     if(playlist.length === 0) {
-      // alert(locale.noSongsInPlaylist); // Use custom modal instead of alert
-      console.log(locale.noSongsInPlaylist);
+      alert(locale.noSongsInPlaylist);
       return;
     }
     const exportablePlaylist = playlist.map(track => ({
@@ -2009,13 +1969,11 @@
           showTab('playlist-tab'); // Switch to playlist tab after importing
           renderLibraryList(currentFilter.type); // Update library list
         } else {
-          // alert(locale.importError); // Use custom modal instead of alert
-          console.log(locale.importError);
+          alert(locale.importError);
         }
       } catch (error) {
         console.error("Import playlist error:", error);
-        // alert(locale.importError); // Use custom modal instead of alert
-        console.log(locale.importError);
+        alert(locale.importError);
       }
     };
     reader.readAsText(file);
@@ -2025,8 +1983,7 @@
   function handleFilesFromInput(files) {
     const accepted = Array.from(files).filter(f => isSupportedFileType(f.name));
     if (accepted.length === 0) {
-      // alert(locale.fileNotSupported); // Use custom modal instead of alert
-      console.log(locale.fileNotSupported);
+      alert(locale.fileNotSupported);
       return;
     }
     accepted.forEach(file => {
@@ -2212,8 +2169,7 @@
     savePlaylist();
     renderPlaylist(); // Update playlist display
     renderLibraryList(currentFilter.type); // Update library display
-    // alert(locale.confirmEdit); // Use custom modal instead of alert
-    console.log(locale.confirmEdit);
+    alert(locale.confirmEdit);
     // If currently playing, update display immediately
     if (currentIndex === trackIndex) {
       currentSongTitleEl.textContent = playlist[currentIndex].title;
@@ -2401,120 +2357,6 @@
     renderLibraryList('all');
   }
 
-  // --- Drag and Drop Reordering Logic ---
-  let draggedItem = null; // Reference to the HTML element being dragged
-
-  playlistEl.addEventListener('dragstart', (e) => {
-      // Check if the dragged element is a playlist item
-      if (e.target.classList.contains('playlist-item')) {
-          draggedItem = e.target;
-          // Set the data to be transferred (e.g., track ID)
-          e.dataTransfer.setData('text/plain', draggedItem.dataset.trackId);
-          e.dataTransfer.effectAllowed = 'move';
-          // Add a class for visual feedback during drag
-          setTimeout(() => { // Use setTimeout to ensure class is added after the browser captures the initial state
-              draggedItem.classList.add('dragging');
-          }, 0);
-      }
-  });
-
-  playlistEl.addEventListener('dragover', (e) => {
-      e.preventDefault(); // Necessary to allow a drop
-      const currentElement = e.target.closest('.playlist-item'); // Get the playlist item being dragged over
-
-      // Only proceed if there's a dragged item and we're over a different playlist item
-      if (draggedItem && currentElement && currentElement !== draggedItem) {
-          // Determine if we are above or below the center of the current element
-          const rect = currentElement.getBoundingClientRect();
-          const offset = e.clientY - rect.top - rect.height / 2;
-
-          // Remove any existing drag-over-placeholder classes
-          playlistEl.querySelectorAll('.drag-over-placeholder').forEach(el => el.classList.remove('drag-over-placeholder'));
-
-          if (offset < 0) { // Dragging above the current element
-              currentElement.classList.add('drag-over-placeholder');
-          } else { // Dragging below the current element
-              // Add placeholder to the next sibling, or append to parent if no next sibling
-              if (currentElement.nextElementSibling) {
-                  currentElement.nextElementSibling.classList.add('drag-over-placeholder');
-              } else {
-                  // This case means we are at the end of the list, so the placeholder should be at the end
-                  // A simpler approach for visual feedback at the end might be to just add a bottom border
-                  // to the last element, or handle it in the drop logic. For now, we'll just not add a placeholder.
-              }
-          }
-      }
-  });
-
-  playlistEl.addEventListener('dragleave', (e) => {
-      // Remove placeholder when leaving an element
-      e.target.closest('.playlist-item')?.classList.remove('drag-over-placeholder');
-  });
-
-  playlistEl.addEventListener('drop', (e) => {
-      e.preventDefault();
-      // Remove all placeholder classes
-      playlistEl.querySelectorAll('.drag-over-placeholder').forEach(el => el.classList.remove('drag-over-placeholder'));
-
-      if (draggedItem) {
-          draggedItem.classList.remove('dragging'); // Remove dragging class
-
-          const dropTarget = e.target.closest('.playlist-item');
-
-          if (dropTarget && dropTarget !== draggedItem) {
-              const rect = dropTarget.getBoundingClientRect();
-              const offset = e.clientY - rect.top - rect.height / 2;
-
-              if (offset < 0) { // Drop before the target
-                  playlistEl.insertBefore(draggedItem, dropTarget);
-              } else { // Drop after the target
-                  playlistEl.insertBefore(draggedItem, dropTarget.nextSibling);
-              }
-              updatePlaylistOrder(); // Update the underlying data array
-          } else if (!dropTarget && draggedItem) {
-              // Dropped outside any specific item, but still within the playlist container
-              // Append to the end if dropped in empty space at the bottom
-              playlistEl.appendChild(draggedItem);
-              updatePlaylistOrder();
-          }
-          draggedItem = null; // Reset dragged item
-      }
-  });
-
-  playlistEl.addEventListener('dragend', (e) => {
-      // Clean up any remaining dragging classes
-      if (draggedItem) {
-          draggedItem.classList.remove('dragging');
-      }
-      playlistEl.querySelectorAll('.drag-over-placeholder').forEach(el => el.classList.remove('drag-over-placeholder'));
-      draggedItem = null; // Ensure draggedItem is reset on drag end
-  });
-
-  // Function to update the playlist array based on the DOM order
-  function updatePlaylistOrder() {
-      const newPlaylistOrder = [];
-      const playlistItems = playlistEl.querySelectorAll('.playlist-item');
-
-      let newCurrentIndex = -1; // To track the new index of the currently playing song
-
-      playlistItems.forEach((itemEl, newIdx) => {
-          const trackId = itemEl.dataset.trackId;
-          const track = playlist.find(t => t.id === trackId);
-          if (track) {
-              newPlaylistOrder.push(track);
-              // If this is the currently playing track, update its index
-              if (currentIndex !== -1 && playlist[currentIndex] && track.id === playlist[currentIndex].id) {
-                  newCurrentIndex = newIdx;
-              }
-          }
-      });
-
-      playlist = newPlaylistOrder; // Update the main playlist array
-      currentIndex = newCurrentIndex; // Update the current index
-      savePlaylist(); // Persist the new order
-      renderPlaylist(); // Re-render to ensure UI reflects the order and active state
-  }
-
 
   // Initialize
   function init() {
@@ -2578,4 +2420,69 @@
     });
 
     themeColorPicker.addEventListener('input', (e) => {
-      const newColo
+      const newColor = e.target.value;
+      document.documentElement.style.setProperty('--primary-color', newColor);
+      // Set RGB variable for dynamic RGBA in CSS
+      document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(newColor));
+      updatePlaylistActive(); // Reapply active style with new color
+      // Also update scrollbar color if it uses primary-color directly
+      document.documentElement.style.setProperty('scrollbar-color', `var(--primary-color) #2a2a2a`);
+    });
+    // Set initial RGB variable and scrollbar color
+    document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(themeColorPicker.value));
+    document.documentElement.style.setProperty('scrollbar-color', `var(--primary-color) #2a2a2a`);
+
+
+    updateCoverArt(defaultCoverArt);
+    // Ensure playlist is rendered and download status checked before attempting autoplay
+    checkAllTracksDownloadStatus().then(() => {
+      if (playlist.length > 0) {
+        // Just show the info for the first song without auto-playing if not already playing
+        const firstTrack = playlist[0];
+        currentSongTitleEl.textContent = firstTrack.title;
+        currentSongArtistEl.textContent = firstTrack.artist;
+        updateCoverArt(firstTrack.cover);
+      } else {
+        updateLocaleTexts(); // Set "No track playing" if playlist is empty
+      }
+      renderPlaylist(); // Ensure playlist is rendered initially
+      renderLibraryList('all'); // Render library list with 'all' songs view initially
+    });
+
+    setupVisualizer();
+
+    // Tab button event listeners
+    libraryTabBtn.addEventListener('click', () => showTab('library-tab')); // Renamed
+    playlistTabBtn.addEventListener('click', () => showTab('playlist-tab'));
+
+    // Library Filter Nav buttons
+    viewAllSongsBtn.addEventListener('click', () => renderLibraryList('all'));
+    viewAlbumsBtn.addEventListener('click', () => renderLibraryList('albums'));
+    viewArtistsBtn.addEventListener('click', () => renderLibraryList('artists'));
+    viewGenresBtn.addEventListener('click', () => renderLibraryList('genres'));
+    clearFilterBtn.addEventListener('click', clearFilter);
+
+
+    // Set initial active tab
+    showTab('playlist-tab'); // Default to showing the playlist tab
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch((error) => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>
