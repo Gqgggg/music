@@ -241,7 +241,7 @@
 
   #search-input {
     width: calc(100% - 40px);
-    margin: 15px 20px 15px 20px; /* Added top margin */
+    margin: 15px 20px 0px 20px; /* Adjusted top margin */
     padding: 10px 15px; /* More padding */
     border-radius: 10px; /* Slightly more rounded */
     border: none;
@@ -260,6 +260,39 @@
     background-color: #3c3c3c;
     box-shadow: 0 0 0 2px var(--primary-color); /* Focus ring */
   }
+
+  /* Active Filter Display */
+  #active-filter-display {
+    padding: 10px 20px;
+    background-color: var(--background-light);
+    color: var(--text-color);
+    font-size: 0.9em;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.3s ease;
+  }
+
+  #active-filter-display.active {
+    opacity: 1;
+  }
+
+  #active-filter-display button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 1em;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  #active-filter-display button:hover {
+    color: #fff;
+  }
+
 
   #playlist {
     max-height: 280px; /* Still maintains height within tab */
@@ -344,10 +377,10 @@
     text-overflow: ellipsis;
   }
 
-  /* Download/Delete buttons */
+  /* Download/Delete/Edit buttons */
   .download-btn,
-  .delete-download-btn {
-    margin-left: auto;
+  .delete-download-btn,
+  .edit-info-btn {
     background: none;
     border: none;
     color: var(--text-muted); /* Muted color */
@@ -363,7 +396,9 @@
   .download-btn:hover,
   .download-btn:focus,
   .delete-download-btn:hover,
-  .delete-download-btn:focus {
+  .delete-download-btn:focus,
+  .edit-info-btn:hover,
+  .edit-info-btn:focus {
     opacity: 1;
     background-color: rgba(255, 255, 255, 0.15); /* Slightly brighter hover */
     outline: none;
@@ -375,7 +410,8 @@
   }
 
   .download-btn:disabled,
-  .delete-download-btn:disabled {
+  .delete-download-btn:disabled,
+  .edit-info-btn:disabled {
     cursor: not-allowed;
     opacity: 0.3; /* More faded when disabled */
     transform: none; /* No transform when disabled */
@@ -430,7 +466,8 @@
 
   /* Action Buttons & Inputs (General Styling) */
   .features-group input[type="url"],
-  .features-group button {
+  .features-group button,
+  .library-filter-nav button { /* Added library filter buttons */
     width: 100%;
     padding: 10px;
     border: none;
@@ -460,17 +497,121 @@
   }
 
   .features-group button:hover,
-  .features-group button:focus {
+  .features-group button:focus,
+  .library-filter-nav button:hover,
+  .library-filter-nav button:focus { /* Added library filter buttons */
     background-color: #ff4433;
     outline: none;
     transform: translateY(-2px); /* Lift button on hover */
     box-shadow: 0 4px 10px rgba(0,0,0,0.4);
   }
 
-  .features-group button:active {
+  .features-group button:active,
+  .library-filter-nav button:active { /* Added library filter buttons */
     transform: translateY(0); /* Press effect */
     box-shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
+
+  /* Library Browser Section */
+  #library-browser {
+    border-top: 1px solid var(--border-color);
+    padding: 15px 20px;
+    flex-grow: 1; /* Allows it to take available space within the tab */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  #library-browser h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.1em;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding-bottom: 5px;
+  }
+
+  #library-filter-nav {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+  }
+
+  #library-filter-nav button {
+    flex: 1; /* Distribute space evenly */
+    min-width: 80px; /* Ensure buttons don't get too small */
+    background-color: var(--background-light);
+    color: var(--text-color);
+    box-shadow: none; /* No shadow by default for these */
+    font-weight: normal;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  #library-filter-nav button.active {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transform: none; /* No lift when active */
+  }
+
+  #library-filter-nav button:hover:not(.active) {
+    background-color: #3c3c3c;
+    transform: none;
+    box-shadow: none;
+  }
+
+  #library-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 250px; /* Limit height if many items */
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background-color: var(--background-light);
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) #2a2a2a;
+    flex-grow: 1; /* Take remaining space */
+  }
+
+  #library-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #library-list::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 4px;
+  }
+
+  .library-list-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1em;
+  }
+  .library-list-item:last-child {
+    border-bottom: none;
+  }
+  .library-list-item:hover {
+    background-color: #333;
+  }
+  .library-list-item span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+  }
+  .library-list-item .count {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    margin-left: 10px;
+    flex-shrink: 0;
+  }
+
 
   /* Visualizer */
   #visualizer {
@@ -574,7 +715,7 @@
     }
     #search-input {
       width: calc(100% - 30px);
-      margin: 10px 15px; /* Adjusted margin */
+      margin: 10px 15px 0px 15px; /* Adjusted margin */
     }
     .playlist-item {
       padding: 8px 15px;
@@ -589,7 +730,7 @@
     .title-artist .artist {
       font-size: 11px;
     }
-    .download-btn, .delete-download-btn, .playlist-item-controls button {
+    .download-btn, .delete-download-btn, .edit-info-btn, .playlist-item-controls button {
         font-size: 1em;
         width: 28px;
         height: 28px;
@@ -603,6 +744,21 @@
     #tab-navigation button {
         font-size: 1em;
         padding: 12px 0;
+    }
+    #library-browser {
+      padding: 10px 15px;
+      gap: 10px;
+    }
+    #library-filter-nav {
+      gap: 5px;
+    }
+    #library-filter-nav button {
+      padding: 8px;
+      min-width: unset;
+    }
+    .library-list-item {
+      padding: 10px 12px;
+      font-size: 1em;
     }
   }
 
@@ -631,11 +787,23 @@
   </div>
 
   <div id="tab-navigation" role="tablist" aria-label="Music Player Tabs">
-    <button id="music-tab-btn" role="tab" aria-selected="true" aria-controls="music-tab-content" tabindex="0">Music</button>
+    <button id="library-tab-btn" role="tab" aria-selected="true" aria-controls="library-tab-content" tabindex="0">Library</button>
     <button id="playlist-tab-btn" role="tab" aria-selected="false" aria-controls="playlist-tab-content" tabindex="-1">Playlist</button>
   </div>
 
-  <div id="music-tab-content" class="tab-content active" role="tabpanel" aria-labelledby="music-tab-btn">
+  <div id="library-tab-content" class="tab-content active" role="tabpanel" aria-labelledby="library-tab-btn">
+    <div id="library-browser">
+      <h3>Browse Library</h3>
+      <div id="library-filter-nav">
+        <button id="view-all-songs-btn">All Songs</button>
+        <button id="view-albums-btn">Albums</button>
+        <button id="view-artists-btn">Artists</button>
+        <button id="view-genres-btn">Genres</button>
+      </div>
+      <ul id="library-list">
+        </ul>
+    </div>
+
     <div id="stream-section" class="features-group">
       <h3>Stream Music</h3>
       <input id="stream-url-input" type="url" placeholder="Enter streaming URL (mp3/aac)" aria-label="Streaming URL" />
@@ -660,6 +828,10 @@
   </div>
 
   <div id="playlist-tab-content" class="tab-content" role="tabpanel" aria-labelledby="playlist-tab-btn" style="display: none;">
+    <div id="active-filter-display">
+      <span id="current-filter-text"></span>
+      <button id="clear-filter-btn">Clear Filter</button>
+    </div>
     <input id="search-input" type="search" placeholder="Search songs..." aria-label="Search songs" />
     <ul id="playlist" role="list" tabindex="0" aria-label="Playlist"></ul>
   </div>
@@ -719,12 +891,29 @@
       noSongsInPlaylistToPreload: "No songs in playlist to preload.",
       autoplayBlocked: "Autoplay blocked. Please tap play or select a song.",
       // Headings
-      musicTab: "Music", // New
-      playlistTab: "Playlist", // New
+      libraryTab: "Library", // New
+      playlistTab: "Playlist", // Existing
       streamMusicHeading: "Stream Music",
       fileManagementHeading: "File Management",
       toolsHeading: "Tools",
       settingsHeading: "Settings",
+      // Library View
+      browseLibraryHeading: "Browse Library",
+      allSongs: "All Songs",
+      albums: "Albums",
+      artists: "Artists",
+      genres: "Genres",
+      editInfo: "Edit Info",
+      clearFilter: "Clear Filter",
+      filteringBy: "Filtering by:",
+      unknownAlbum: "Unknown Album",
+      unknownArtist: "Unknown Artist",
+      unknownGenre: "Unknown Genre",
+      promptTitle: "Enter Title:",
+      promptArtist: "Enter Artist:",
+      promptAlbum: "Enter Album:",
+      promptGenre: "Enter Genre:",
+      confirmEdit: "Track info updated!",
     },
     es: {
       searchPlaceholder: "Buscar canciones...",
@@ -762,12 +951,29 @@
       noSongsInPlaylistToPreload: "No hay canciones en la lista para precargar.",
       autoplayBlocked: "Autoplay bloqueado. Toca reproducir o selecciona una canción.",
       // Headings
-      musicTab: "Música",
+      libraryTab: "Biblioteca",
       playlistTab: "Lista de Reproducción",
       streamMusicHeading: "Reproducir Música",
       fileManagementHeading: "Gestión de Archivos",
       toolsHeading: "Herramientas",
       settingsHeading: "Configuración",
+      // Library View
+      browseLibraryHeading: "Explorar Biblioteca",
+      allSongs: "Todas las Canciones",
+      albums: "Álbumes",
+      artists: "Artistas",
+      genres: "Géneros",
+      editInfo: "Editar Info",
+      clearFilter: "Borrar Filtro",
+      filteringBy: "Filtrando por:",
+      unknownAlbum: "Álbum Desconocido",
+      unknownArtist: "Artista Desconocido",
+      unknownGenre: "Género Desconocido",
+      promptTitle: "Introducir Título:",
+      promptArtist: "Introducir Artista:",
+      promptAlbum: "Introducir Álbum:",
+      promptGenre: "Introducir Género:",
+      confirmEdit: "¡Información de la pista actualizada!",
     },
     fr: {
       searchPlaceholder: "Rechercher des chansons...",
@@ -806,12 +1012,29 @@
       autoplayBlocked: "Autoplay bloqué. Veuillez appuyer sur lecture ou sélectionner une chanson.",
 
       // Headings
-      musicTab: "Musique",
+      libraryTab: "Bibliothèque",
       playlistTab: "Liste de lecture",
       streamMusicHeading: "Diffuser de la musique",
       fileManagementHeading: "Gestion des fichiers",
       toolsHeading: "Outils",
       settingsHeading: "Paramètres",
+      // Library View
+      browseLibraryHeading: "Parcourir la bibliothèque",
+      allSongs: "Toutes les chansons",
+      albums: "Albums",
+      artists: "Artistes",
+      genres: "Genres",
+      editInfo: "Modifier les infos",
+      clearFilter: "Effacer le filtre",
+      filteringBy: "Filtrage par :",
+      unknownAlbum: "Album Inconnu",
+      unknownArtist: "Artiste Inconnu",
+      unknownGenre: "Genre Inconnu",
+      promptTitle: "Entrez le titre :",
+      promptArtist: "Entrez l'artiste :",
+      promptAlbum: "Entrez l'album :",
+      promptGenre: "Entrez le genre :",
+      confirmEdit: "Informations de la piste mises à jour !",
     },
     de: {
       searchPlaceholder: "Songs suchen...",
@@ -850,12 +1073,29 @@
       autoplayBlocked: "Autoplay blockiert. Bitte auf Play tippen oder einen Song auswählen.",
 
       // Headings
-      musicTab: "Musik",
+      libraryTab: "Bibliothek",
       playlistTab: "Playlist",
       streamMusicHeading: "Musik streamen",
       fileManagementHeading: "Dateiverwaltung",
       toolsHeading: "Werkzeuge",
       settingsHeading: "Einstellungen",
+      // Library View
+      browseLibraryHeading: "Bibliothek durchsuchen",
+      allSongs: "Alle Songs",
+      albums: "Alben",
+      artists: "Künstler",
+      genres: "Genres",
+      editInfo: "Info bearbeiten",
+      clearFilter: "Filter löschen",
+      filteringBy: "Filtern nach:",
+      unknownAlbum: "Unbekanntes Album",
+      unknownArtist: "Unbekannter Künstler",
+      unknownGenre: "Unbekanntes Genre",
+      promptTitle: "Titel eingeben:",
+      promptArtist: "Künstler eingeben:",
+      promptAlbum: "Album eingeben:",
+      promptGenre: "Genre eingeben:",
+      confirmEdit: "Titelinfo aktualisiert!",
     },
   };
 
@@ -888,15 +1128,27 @@
   const progressBar = document.getElementById('progress-bar');
 
   // New Tab Elements
-  const musicTabBtn = document.getElementById('music-tab-btn');
+  const libraryTabBtn = document.getElementById('library-tab-btn'); // Renamed
   const playlistTabBtn = document.getElementById('playlist-tab-btn');
-  const musicTabContent = document.getElementById('music-tab-content');
+  const libraryTabContent = document.getElementById('library-tab-content'); // Renamed
   const playlistTabContent = document.getElementById('playlist-tab-content');
 
+  // New Library Browse Elements
+  const browseLibraryHeading = document.querySelector('#library-browser h3');
+  const viewAllSongsBtn = document.getElementById('view-all-songs-btn');
+  const viewAlbumsBtn = document.getElementById('view-albums-btn');
+  const viewArtistsBtn = document.getElementById('view-artists-btn');
+  const viewGenresBtn = document.getElementById('view-genres-btn');
+  const libraryListEl = document.getElementById('library-list');
+  const activeFilterDisplay = document.getElementById('active-filter-display');
+  const currentFilterText = document.getElementById('current-filter-text');
+  const clearFilterBtn = document.getElementById('clear-filter-btn');
+
+
   // Heading elements (now nested differently)
-  const streamMusicHeading = musicTabContent.querySelector('#stream-section h3');
-  const fileManagementHeading = musicTabContent.querySelector('#file-management-section h3');
-  const toolsHeading = musicTabContent.querySelector('#tools-section h3');
+  const streamMusicHeading = libraryTabContent.querySelector('#stream-section h3');
+  const fileManagementHeading = libraryTabContent.querySelector('#file-management-section h3');
+  const toolsHeading = libraryTabContent.querySelector('#tools-section h3');
   const settingsHeading = document.querySelector('#settings-section h3');
 
 
@@ -905,11 +1157,17 @@
   // Audio & state
   const audio = new Audio();
   let playlist = []; // This will be loaded from localStorage
-  let filteredPlaylist = [];
+  let filteredPlaylist = []; // For search results within the playlist tab
   let currentIndex = -1;
   let isPlaying = false;
   let shuffle = false;
   let repeat = false;
+
+  // New: Filter for library/playlist views
+  let currentFilter = {
+    type: 'all', // 'all', 'album', 'artist', 'genre'
+    value: null // The specific album name, artist name, or genre name
+  };
 
   // Audio context for visualization
   let audioCtx, analyser, source, dataArray, animationId;
@@ -920,7 +1178,7 @@
   const LOCAL_STORAGE_PLAYLIST_KEY = 'musicPlayerPlaylist'; // Key for localStorage
 
   // Helper: default cover art SVG as base64 data URI
-  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDUwIDUwIiBmaWxsPSIjNjY2NjY2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI2NjY2NjY2MiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYgNiIiIHN0cm9rZT0iIzQwNDA0MCIgc3Ryb2tlLXdpZHRoPSI1Ii8+CjxwYXRoIGQ9Ik0yNSAxNWw2IDYtNiA2bTAgMTBsNiA2bS02LTYtNiA2IiBmaWxsPSIjNzc3ZjdmIi8+CjwvYXN2Zz4=`;
+  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAMDUwIDUwIiBmaWxsPSIjNjY2NjY2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI2NjY2NjY2MiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYgNiIiIHN0cm9rZT0iIzQwNDA0MCIgc3Ryb2tlLXdpZHRoPSI1Ii8+CjxwYXRoIGQ9Ik0yNSAxNWw2IDYtNiA2bTAgMTBsNiA2bS02LTYtNiA2IiBmaWxsPSIjNzc3ZjdmIi8+CjwvYXN2Zz4=`;
 
   // Set default UI text based on locale
   function updateLocaleTexts() {
@@ -941,12 +1199,20 @@
     preloadAllBtn.textContent = locale.preloadAllMusic;
 
     // Update section headings
-    musicTabBtn.textContent = locale.musicTab;
+    libraryTabBtn.textContent = locale.libraryTab; // Renamed
     playlistTabBtn.textContent = locale.playlistTab;
     streamMusicHeading.textContent = locale.streamMusicHeading;
     fileManagementHeading.textContent = locale.fileManagementHeading;
     toolsHeading.textContent = locale.toolsHeading;
     settingsHeading.textContent = locale.settingsHeading;
+
+    // Library Browser Headings/Buttons
+    browseLibraryHeading.textContent = locale.browseLibraryHeading;
+    viewAllSongsBtn.textContent = locale.allSongs;
+    viewAlbumsBtn.textContent = locale.albums;
+    viewArtistsBtn.textContent = locale.artists;
+    viewGenresBtn.textContent = locale.genres;
+    clearFilterBtn.textContent = locale.clearFilter;
 
     if(currentIndex === -1) {
         coverArt.alt = locale.noTrack;
@@ -965,7 +1231,7 @@
   // Extract basic metadata from file or URL (title from filename)
   // For simplicity, no ID3 parsing, just filename for title
   function createTrackObject(fileOrUrl) {
-    let title = '', artist = '', url = '', cover = defaultCoverArt;
+    let title = '', artist = '', album = locale.unknownAlbum, genre = locale.unknownGenre, url = '', cover = defaultCoverArt;
     if(typeof fileOrUrl === 'string') {
       // Streaming URL
       url = fileOrUrl;
@@ -975,10 +1241,12 @@
       // File object
       url = URL.createObjectURL(fileOrUrl);
       title = fileOrUrl.name.replace(/\.[^/.]+$/, "");
-      artist = '';
+      artist = ''; // Can't easily get from file name
     }
     // Add new properties for download feature
-    return {title, artist, url, cover, isDownloaded: false, offlineUrl: null};
+    // A unique ID is crucial for IndexedDB and editing
+    const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+    return {id, title, artist, album, genre, url, cover, isDownloaded: false, offlineUrl: null};
   }
 
   // Helper to open IndexedDB
@@ -1006,7 +1274,7 @@
 
   // Function to download and store a track
   async function downloadAndStoreTrack(track) {
-    if (!track || !track.url) {
+    if (!track || !track.url || !track.id) {
       console.error('Invalid track object for download:', track);
       return false;
     }
@@ -1014,8 +1282,6 @@
         console.log(`Track "${track.title}" is already downloaded.`);
         return true;
     }
-
-    const trackId = `track_${btoa(track.url).replace(/=/g, '')}_${Date.now()}`;
 
     try {
       const db = await openIndexedDB();
@@ -1030,18 +1296,20 @@
       const store = transaction.objectStore(IDB_STORE_NAME);
 
       await store.add({
-        id: trackId,
+        id: track.id, // Use the track's existing ID
         title: track.title,
         artist: track.artist,
+        album: track.album,
+        genre: track.genre,
         originalUrl: track.url,
         audioBlob: audioBlob,
         mimeType: mimeType,
         cover: track.cover || defaultCoverArt,
       });
 
-      const originalTrackIndex = playlist.findIndex(t => t.url === track.url);
+      const originalTrackIndex = playlist.findIndex(t => t.id === track.id);
       if (originalTrackIndex !== -1) {
-        playlist[originalTrackIndex].offlineUrl = `indexeddb://${trackId}`;
+        playlist[originalTrackIndex].offlineUrl = `indexeddb://${track.id}`;
         playlist[originalTrackIndex].isDownloaded = true;
         renderPlaylist();
         savePlaylist(); // Save playlist after download status changes
@@ -1073,7 +1341,7 @@
 
           await store.delete(trackId);
 
-          const originalTrackIndex = playlist.findIndex(t => t.offlineUrl === track.offlineUrl);
+          const originalTrackIndex = playlist.findIndex(t => t.id === track.id);
           if (originalTrackIndex !== -1) {
               delete playlist[originalTrackIndex].offlineUrl;
               playlist[originalTrackIndex].isDownloaded = false;
@@ -1091,7 +1359,7 @@
 
   // Function to check if a track is downloaded
   async function isTrackDownloaded(track) {
-    if (!track || !track.url) return false;
+    if (!track || !track.id) return false;
 
     try {
       const db = await openIndexedDB();
@@ -1099,18 +1367,12 @@
       const store = transaction.objectStore(IDB_STORE_NAME);
       
       return new Promise((resolve) => {
-        const request = store.openCursor();
+        const request = store.get(track.id); // Get directly by ID
         request.onsuccess = (event) => {
-          const cursor = event.target.result;
-          if (cursor) {
-            // Check if the originalUrl matches
-            if (cursor.value.originalUrl === track.url) {
-              track.offlineUrl = `indexeddb://${cursor.value.id}`;
-              track.isDownloaded = true;
-              resolve(true);
-              return;
-            }
-            cursor.continue();
+          if (event.target.result) {
+            track.offlineUrl = `indexeddb://${event.target.result.id}`;
+            track.isDownloaded = true;
+            resolve(true);
           } else {
             resolve(false);
           }
@@ -1132,6 +1394,7 @@
       await isTrackDownloaded(track);
     }
     renderPlaylist(); // Render after checking all statuses
+    renderLibraryList(currentFilter.type); // Also render library list
   }
 
   // Function to preload all tracks in the playlist
@@ -1178,9 +1441,13 @@
   function savePlaylist() {
     try {
       // We only save the necessary properties to keep the JSON size down
+      // Now including ID for persistence and album/genre
       const simplePlaylist = playlist.map(track => ({
+        id: track.id,
         title: track.title,
         artist: track.artist,
+        album: track.album, // Save album
+        genre: track.genre, // Save genre
         url: track.url,
         cover: track.cover
       }));
@@ -1199,8 +1466,11 @@
         const loadedTracks = JSON.parse(storedPlaylist);
         // Reconstruct the full track object, ensuring isDownloaded/offlineUrl are correctly re-evaluated
         playlist = loadedTracks.map(t => ({
+            id: t.id || (Date.now().toString(36) + Math.random().toString(36).substring(2, 7)), // Ensure ID
             title: t.title || 'Unknown Title',
             artist: t.artist || 'Unknown Artist',
+            album: t.album || locale.unknownAlbum, // Load album
+            genre: t.genre || locale.unknownGenre, // Load genre
             url: t.url,
             cover: t.cover || defaultCoverArt,
             isDownloaded: false, // Will be updated by checkAllTracksDownloadStatus
@@ -1218,18 +1488,43 @@
   }
 
 
-  // Render playlist items filtered by searchInput.value
+  // Render playlist items filtered by searchInput.value AND currentFilter
   function renderPlaylist() {
     playlistEl.innerHTML = '';
 
     const searchTerm = searchInput.value.trim().toLowerCase();
 
-    filteredPlaylist = playlist.filter(track => {
+    // First, filter by currentLibraryFilter
+    let temporarilyFilteredPlaylist = playlist;
+
+    if (currentFilter.type !== 'all' && currentFilter.value !== null) {
+      temporarilyFilteredPlaylist = playlist.filter(track => {
+        if (currentFilter.type === 'album') return track.album.toLowerCase() === currentFilter.value.toLowerCase();
+        if (currentFilter.type === 'artist') return track.artist.toLowerCase() === currentFilter.value.toLowerCase();
+        if (currentFilter.type === 'genre') return track.genre.toLowerCase() === currentFilter.value.toLowerCase();
+        return true; // Should not happen if type is not 'all'
+      });
+    }
+
+    // Then, apply search filter on the already filtered list
+    filteredPlaylist = temporarilyFilteredPlaylist.filter(track => {
       return (
         track.title.toLowerCase().includes(searchTerm) ||
-        track.artist.toLowerCase().includes(searchTerm)
+        track.artist.toLowerCase().includes(searchTerm) ||
+        track.album.toLowerCase().includes(searchTerm) || // Include album in search
+        track.genre.toLowerCase().includes(searchTerm)    // Include genre in search
       );
     });
+
+    // Update filter display
+    if (currentFilter.type !== 'all') {
+      activeFilterDisplay.classList.add('active');
+      currentFilterText.textContent = `${locale.filteringBy} ${currentFilter.value} (${currentFilter.type})`;
+    } else {
+      activeFilterDisplay.classList.remove('active');
+      currentFilterText.textContent = '';
+    }
+
 
     if(filteredPlaylist.length === 0) {
       const emptyMsg = document.createElement('li');
@@ -1248,6 +1543,7 @@
         item.className = 'playlist-item';
         item.tabIndex = 0;
         item.dataset.originalIdx = originalIndex; // Store original index for operations
+        item.dataset.trackId = track.id; // Store unique ID for direct lookup
 
         if(originalIndex === currentIndex) {
             item.classList.add('active');
@@ -1266,7 +1562,8 @@
 
         const artistEl = document.createElement('div');
         artistEl.className = 'artist';
-        artistEl.textContent = track.artist;
+        // Display artist and album
+        artistEl.textContent = track.artist + (track.album && track.album !== locale.unknownAlbum ? ` / ${track.album}` : '');
 
         titleArtist.appendChild(titleEl);
         titleArtist.appendChild(artistEl);
@@ -1288,7 +1585,7 @@
                 alert(`"${track.title}" ${locale.downloadedAlert}`);
             }
             downloadBtn.disabled = false;
-            renderPlaylist();
+            renderPlaylist(); // Re-render to update button state
         });
         item.appendChild(downloadBtn);
 
@@ -1305,7 +1602,7 @@
                 alert(`"${track.title}" ${locale.deleteDownloadedAlert}`);
             }
             deleteDownloadBtn.disabled = false;
-            renderPlaylist();
+            renderPlaylist(); // Re-render to update button state
         });
         item.appendChild(deleteDownloadBtn);
 
@@ -1317,9 +1614,20 @@
             deleteDownloadBtn.style.display = 'none';
         }
 
-        // --- NEW Playlist Management Buttons ---
+        // --- NEW Playlist Management Buttons & Edit Info ---
         const playlistItemControls = document.createElement('div');
         playlistItemControls.className = 'playlist-item-controls';
+
+        // Edit Info Button
+        const editInfoBtn = document.createElement('button');
+        editInfoBtn.className = 'edit-info-btn';
+        editInfoBtn.setAttribute('aria-label', locale.editInfo);
+        editInfoBtn.textContent = '✏️';
+        editInfoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            editTrackInfo(track.id);
+        });
+        playlistItemControls.appendChild(editInfoBtn);
 
         const moveUpBtn = document.createElement('button');
         moveUpBtn.className = 'move-up-btn';
@@ -1418,19 +1726,50 @@
   function playNext() {
     if(playlist.length === 0) return;
 
-    if(shuffle) {
-      let nextIdx;
-      do {
-        nextIdx = Math.floor(Math.random() * playlist.length);
-      } while (nextIdx === currentIndex && playlist.length > 1);
-      playTrack(nextIdx, playlist[nextIdx].isDownloaded ? playlist[nextIdx].offlineUrl : playlist[nextIdx].url);
-    } else {
-      if(currentIndex + 1 < playlist.length) {
-        playTrack(currentIndex + 1, playlist[currentIndex + 1].isDownloaded ? playlist[currentIndex + 1].offlineUrl : playlist[currentIndex + 1].url);
-      } else if(repeat) {
-        playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
-      } else {
+    // Filtered playlist for playback logic (if a filter is active)
+    let playablePlaylist = playlist;
+    if (currentFilter.type !== 'all' && currentFilter.value !== null) {
+      playablePlaylist = playlist.filter(track => {
+        if (currentFilter.type === 'album') return track.album.toLowerCase() === currentFilter.value.toLowerCase();
+        if (currentFilter.type === 'artist') return track.artist.toLowerCase() === currentFilter.value.toLowerCase();
+        if (currentFilter.type === 'genre') return track.genre.toLowerCase() === currentFilter.value.toLowerCase();
+        return true;
+      });
+    }
+
+    if (playablePlaylist.length === 0) { // No songs in filtered view
         pauseAudio();
+        return;
+    }
+
+    let nextOriginalIndex = -1; // Index in the main `playlist` array
+
+    if(shuffle) {
+      let nextFilteredIdx;
+      do {
+        nextFilteredIdx = Math.floor(Math.random() * playablePlaylist.length);
+        nextOriginalIndex = playlist.indexOf(playablePlaylist[nextFilteredIdx]);
+      } while (nextOriginalIndex === currentIndex && playablePlaylist.length > 1);
+      playTrack(nextOriginalIndex, playablePlaylist[nextFilteredIdx].isDownloaded ? playablePlaylist[nextFilteredIdx].offlineUrl : playablePlaylist[nextFilteredIdx].url);
+    } else {
+      // Find current track's index in the *filtered* playlist
+      const currentFilteredIdx = playablePlaylist.findIndex(track => playlist[currentIndex] && track.id === playlist[currentIndex].id);
+
+      if (currentFilteredIdx === -1) { // Current track not in filtered list, start from beginning of filtered list
+          nextOriginalIndex = playlist.indexOf(playablePlaylist[0]);
+      } else if (currentFilteredIdx + 1 < playablePlaylist.length) {
+          nextOriginalIndex = playlist.indexOf(playablePlaylist[currentFilteredIdx + 1]);
+      } else if (repeat) {
+          nextOriginalIndex = playlist.indexOf(playablePlaylist[0]);
+      } else {
+          pauseAudio();
+          return;
+      }
+
+      if (nextOriginalIndex !== -1) {
+          playTrack(nextOriginalIndex, playlist[nextOriginalIndex].isDownloaded ? playlist[nextOriginalIndex].offlineUrl : playlist[nextOriginalIndex].url);
+      } else {
+          pauseAudio(); // Should not happen with above logic, but as a fallback
       }
     }
   }
@@ -1439,19 +1778,49 @@
   function playPrev() {
     if(playlist.length === 0) return;
 
-    if(shuffle) {
-      let prevIdx;
-      do {
-        prevIdx = Math.floor(Math.random() * playlist.length);
-      } while (prevIdx === currentIndex && playlist.length > 1);
-      playTrack(prevIdx, playlist[prevIdx].isDownloaded ? playlist[prevIdx].offlineUrl : playlist[prevIdx].url);
-    } else {
-      if(currentIndex > 0) {
-        playTrack(currentIndex - 1, playlist[currentIndex - 1].isDownloaded ? playlist[currentIndex - 1].offlineUrl : playlist[currentIndex - 1].url);
-      } else if(repeat) {
-        playTrack(playlist.length - 1, playlist[playlist.length - 1].isDownloaded ? playlist[playlist.length - 1].offlineUrl : playlist[playlist.length - 1].url);
-      } else {
+    // Filtered playlist for playback logic (if a filter is active)
+    let playablePlaylist = playlist;
+    if (currentFilter.type !== 'all' && currentFilter.value !== null) {
+      playablePlaylist = playlist.filter(track => {
+        if (currentFilter.type === 'album') return track.album.toLowerCase() === currentFilter.value.toLowerCase();
+        if (currentFilter.type === 'artist') return track.artist.toLowerCase() === currentFilter.value.toLowerCase();
+        if (currentFilter.type === 'genre') return track.genre.toLowerCase() === currentFilter.value.toLowerCase();
+        return true;
+      });
+    }
+
+    if (playablePlaylist.length === 0) {
         pauseAudio();
+        return;
+    }
+
+    let prevOriginalIndex = -1; // Index in the main `playlist` array
+
+    if(shuffle) {
+      let prevFilteredIdx;
+      do {
+        prevFilteredIdx = Math.floor(Math.random() * playablePlaylist.length);
+        prevOriginalIndex = playlist.indexOf(playablePlaylist[prevFilteredIdx]);
+      } while (prevOriginalIndex === currentIndex && playablePlaylist.length > 1);
+      playTrack(prevOriginalIndex, playablePlaylist[prevFilteredIdx].isDownloaded ? playablePlaylist[prevFilteredIdx].offlineUrl : playablePlaylist[prevFilteredIdx].url);
+    } else {
+      const currentFilteredIdx = playablePlaylist.findIndex(track => playlist[currentIndex] && track.id === playlist[currentIndex].id);
+
+      if (currentFilteredIdx === -1) { // Current track not in filtered list, go to last of filtered
+          prevOriginalIndex = playlist.indexOf(playablePlaylist[playablePlaylist.length - 1]);
+      } else if (currentFilteredIdx > 0) {
+          prevOriginalIndex = playlist.indexOf(playablePlaylist[currentFilteredIdx - 1]);
+      } else if (repeat) {
+          prevOriginalIndex = playlist.indexOf(playablePlaylist[playablePlaylist.length - 1]);
+      } else {
+          pauseAudio();
+          return;
+      }
+
+      if (prevOriginalIndex !== -1) {
+          playTrack(prevOriginalIndex, playlist[prevOriginalIndex].isDownloaded ? playlist[prevOriginalIndex].offlineUrl : playlist[prevOriginalIndex].url);
+      } else {
+          pauseAudio();
       }
     }
   }
@@ -1462,11 +1831,13 @@
       pauseAudio();
     } else {
       if(currentIndex === -1 && playlist.length > 0) {
-        // If no song is selected, try to play the first one
-        playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
+        // If no song is selected, try to play the first one from the potentially filtered list
+        let trackToPlay = filteredPlaylist.length > 0 ? filteredPlaylist[0] : playlist[0];
+        playTrack(playlist.indexOf(trackToPlay), trackToPlay.isDownloaded ? trackToPlay.offlineUrl : trackToPlay.url);
       } else if (currentIndex !== -1) {
         // If a song is selected, try to resume it
-        playTrack(currentIndex, playlist[currentIndex].isDownloaded ? playlist[currentIndex].offlineUrl : playlist[currentIndex].url);
+        const track = playlist[currentIndex];
+        playTrack(currentIndex, track.isDownloaded ? track.offlineUrl : track.url);
       } else {
           console.log("No tracks available to play.");
       }
@@ -1527,9 +1898,9 @@
     if (existingIndex === -1) {
         playlist.push(streamTrack);
         savePlaylist(); // Save playlist after adding stream track
-        playTrack(playlist.length - 1);
+        playTrack(playlist.length - 1, streamTrack.url); // Pass URL explicitly
     } else {
-        playTrack(existingIndex);
+        playTrack(existingIndex, playlist[existingIndex].url); // Pass URL explicitly
     }
     showTab('playlist-tab'); // Switch to playlist tab after playing stream
   }
@@ -1541,8 +1912,11 @@
       return;
     }
     const exportablePlaylist = playlist.map(track => ({
+      id: track.id,
       title: track.title,
       artist: track.artist,
+      album: track.album,
+      genre: track.genre,
       url: track.url,
       cover: track.cover,
       // Do not export isDownloaded and offlineUrl as they are runtime/local cache specific
@@ -1570,8 +1944,11 @@
         if(Array.isArray(imported)) {
           // Clear existing playlist and add imported tracks
           playlist = imported.map(t => ({
+              id: t.id || (Date.now().toString(36) + Math.random().toString(36).substring(2, 7)), // Ensure ID
               title: t.title || 'Unknown Title',
               artist: t.artist || 'Unknown Artist',
+              album: t.album || locale.unknownAlbum,
+              genre: t.genre || locale.unknownGenre,
               url: t.url,
               cover: t.cover || defaultCoverArt,
               isDownloaded: false, // Reset download status for imported tracks
@@ -1590,6 +1967,7 @@
           currentSongArtistEl.textContent = '';
           progressBar.style.width = '0%'; // Reset progress bar
           showTab('playlist-tab'); // Switch to playlist tab after importing
+          renderLibraryList(currentFilter.type); // Update library list
         } else {
           alert(locale.importError);
         }
@@ -1618,6 +1996,7 @@
     savePlaylist(); // Save playlist after adding new files
     checkAllTracksDownloadStatus(); // Re-render and check download status after adding new files
     showTab('playlist-tab'); // Switch to playlist tab after adding songs
+    renderLibraryList(currentFilter.type); // Update library list
   }
 
   // Drag & drop handlers for files
@@ -1758,9 +2137,46 @@
 
       savePlaylist();
       renderPlaylist(); // Re-render to reflect removal
+      renderLibraryList(currentFilter.type); // Update library list
       updatePlaylistActive(); // Update active class (might be none)
       console.log(`Track "${removedTrack.title}" removed from playlist.`);
   }
+
+  // NEW: Edit Track Info
+  function editTrackInfo(trackId) {
+    const trackIndex = playlist.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return;
+
+    const track = playlist[trackIndex];
+
+    const newTitle = prompt(locale.promptTitle, track.title);
+    if (newTitle === null) return; // User cancelled
+
+    const newArtist = prompt(locale.promptArtist, track.artist);
+    if (newArtist === null) return;
+
+    const newAlbum = prompt(locale.promptAlbum, track.album);
+    if (newAlbum === null) return;
+
+    const newGenre = prompt(locale.promptGenre, track.genre);
+    if (newGenre === null) return;
+
+    playlist[trackIndex].title = newTitle.trim() || 'Unknown Title';
+    playlist[trackIndex].artist = newArtist.trim() || 'Unknown Artist';
+    playlist[trackIndex].album = newAlbum.trim() || locale.unknownAlbum;
+    playlist[trackIndex].genre = newGenre.trim() || locale.unknownGenre;
+
+    savePlaylist();
+    renderPlaylist(); // Update playlist display
+    renderLibraryList(currentFilter.type); // Update library display
+    alert(locale.confirmEdit);
+    // If currently playing, update display immediately
+    if (currentIndex === trackIndex) {
+      currentSongTitleEl.textContent = playlist[currentIndex].title;
+      currentSongArtistEl.textContent = playlist[currentIndex].artist;
+    }
+  }
+
 
   // Progress Bar Logic
   function updateProgressBar() {
@@ -1809,6 +2225,136 @@
       selectedTabContent.classList.add('active');
       selectedTabContent.style.display = 'flex'; // Use flex for column layout
     }
+    // Render the library list whenever the library tab is shown or the filter changes
+    if (tabId === 'library-tab') {
+      renderLibraryList(currentFilter.type);
+    }
+  }
+
+  // NEW: Library Browse Functions
+  function renderLibraryList(viewType) {
+    libraryListEl.innerHTML = '';
+    let itemsToDisplay = [];
+    let titleProperty = '';
+
+    // Deactivate all filter buttons
+    document.querySelectorAll('#library-filter-nav button').forEach(btn => btn.classList.remove('active'));
+
+    // Set active class for current view button
+    if (viewType === 'all') {
+      viewAllSongsBtn.classList.add('active');
+      itemsToDisplay = [...playlist].sort((a, b) => a.title.localeCompare(b.title));
+      titleProperty = 'title';
+      // If we're showing all songs in the library tab, we should also clear any filter in the playlist tab
+      clearFilter(); // Immediately clear the filter
+    } else if (viewType === 'albums') {
+      viewAlbumsBtn.classList.add('active');
+      itemsToDisplay = getUniqueAlbums().sort((a, b) => a.name.localeCompare(b.name));
+      titleProperty = 'name';
+    } else if (viewType === 'artists') {
+      viewArtistsBtn.classList.add('active');
+      itemsToDisplay = getUniqueArtists().sort((a, b) => a.name.localeCompare(b.name));
+      titleProperty = 'name';
+    } else if (viewType === 'genres') {
+      viewGenresBtn.classList.add('active');
+      itemsToDisplay = getUniqueGenres().sort((a, b) => a.name.localeCompare(b.name));
+      titleProperty = 'name';
+    } else {
+        // Fallback or specific filtered view - render all songs in playlist directly.
+        // This case is for when you click on a specific album/artist/genre.
+        // The library list should then show the *songs* of that filtered group.
+        // For simplicity here, we'll just switch to playlist tab with filter.
+        return;
+    }
+
+    if(itemsToDisplay.length === 0) {
+      const emptyMsg = document.createElement('li');
+      emptyMsg.textContent = `No ${viewType} found.`; // Generic message
+      emptyMsg.style.padding = '10px 20px';
+      emptyMsg.style.color = '#777';
+      emptyMsg.style.textAlign = 'center';
+      libraryListEl.appendChild(emptyMsg);
+      return;
+    }
+
+    itemsToDisplay.forEach(itemData => {
+      const itemEl = document.createElement('li');
+      itemEl.className = 'library-list-item';
+      itemEl.tabIndex = 0;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = itemData[titleProperty];
+      itemEl.appendChild(nameSpan);
+
+      if (itemData.count !== undefined) { // For albums, artists, genres
+        const countSpan = document.createElement('span');
+        countSpan.className = 'count';
+        countSpan.textContent = `(${itemData.count})`;
+        itemEl.appendChild(countSpan);
+      }
+
+      itemEl.addEventListener('click', () => {
+        if (viewType === 'all') {
+            // If already showing all songs, clicking a song should play it
+            const originalIndex = playlist.indexOf(itemData);
+            if (originalIndex !== -1) {
+                const track = playlist[originalIndex];
+                playTrack(originalIndex, track.isDownloaded ? track.offlineUrl : track.url);
+                showTab('playlist-tab'); // Switch to playlist tab
+            }
+        } else {
+            // Apply filter and switch to playlist tab
+            currentFilter.type = viewType.slice(0, -1); // e.g., 'albums' -> 'album'
+            currentFilter.value = itemData.name;
+            renderPlaylist(); // Re-render playlist with filter
+            showTab('playlist-tab'); // Switch to playlist tab
+        }
+      });
+      libraryListEl.appendChild(itemEl);
+    });
+  }
+
+  function getUniqueAlbums() {
+    const albums = {};
+    playlist.forEach(track => {
+      const albumName = track.album || locale.unknownAlbum;
+      if (!albums[albumName]) {
+        albums[albumName] = { name: albumName, count: 0 };
+      }
+      albums[albumName].count++;
+    });
+    return Object.values(albums);
+  }
+
+  function getUniqueArtists() {
+    const artists = {};
+    playlist.forEach(track => {
+      const artistName = track.artist || locale.unknownArtist;
+      if (!artists[artistName]) {
+        artists[artistName] = { name: artistName, count: 0 };
+      }
+      artists[artistName].count++;
+    });
+    return Object.values(artists);
+  }
+
+  function getUniqueGenres() {
+    const genres = {};
+    playlist.forEach(track => {
+      const genreName = track.genre || locale.unknownGenre;
+      if (!genres[genreName]) {
+        genres[genreName] = { name: genreName, count: 0 };
+      }
+      genres[genreName].count++;
+    });
+    return Object.values(genres);
+  }
+
+  function clearFilter() {
+    currentFilter = { type: 'all', value: null };
+    renderPlaylist(); // Re-render playlist to clear filter
+    // Also re-render library list to reset active button if needed
+    renderLibraryList('all');
   }
 
 
@@ -1870,6 +2416,7 @@
       locale = locales[val] || locales.en;
       updateLocaleTexts();
       renderPlaylist(); // Rerender playlist as text might change
+      renderLibraryList(currentFilter.type); // Re-render library list
     });
 
     themeColorPicker.addEventListener('input', (e) => {
@@ -1899,13 +2446,22 @@
         updateLocaleTexts(); // Set "No track playing" if playlist is empty
       }
       renderPlaylist(); // Ensure playlist is rendered initially
+      renderLibraryList('all'); // Render library list with 'all' songs view initially
     });
 
     setupVisualizer();
 
     // Tab button event listeners
-    musicTabBtn.addEventListener('click', () => showTab('music-tab'));
+    libraryTabBtn.addEventListener('click', () => showTab('library-tab')); // Renamed
     playlistTabBtn.addEventListener('click', () => showTab('playlist-tab'));
+
+    // Library Filter Nav buttons
+    viewAllSongsBtn.addEventListener('click', () => renderLibraryList('all'));
+    viewAlbumsBtn.addEventListener('click', () => renderLibraryList('albums'));
+    viewArtistsBtn.addEventListener('click', () => renderLibraryList('artists'));
+    viewGenresBtn.addEventListener('click', () => renderLibraryList('genres'));
+    clearFilterBtn.addEventListener('click', clearFilter);
+
 
     // Set initial active tab
     showTab('playlist-tab'); // Default to showing the playlist tab
