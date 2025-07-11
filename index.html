@@ -879,6 +879,36 @@
 
 </div>
 
+<!-- Custom Message Box HTML -->
+<div id="message-box" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--background-light);
+    color: var(--text-color);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 1000;
+    text-align: center;
+    max-width: 80%;
+    min-width: 250px;
+">
+    <p id="message-box-text"></p>
+    <button id="message-box-ok-btn" style="
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 15px;
+        transition: background-color 0.2s ease;
+    ">OK</button>
+</div>
+
 <script>
 (() => {
   // Localization strings
@@ -1207,8 +1237,19 @@
   const LOCAL_STORAGE_PLAYLIST_KEY = 'musicPlayerPlaylist'; // Key for localStorage
   const LOCAL_STORAGE_PLAYBACK_SPEED_KEY = 'musicPlayerPlaybackSpeed'; // New: Key for playback speed
 
-  // Helper: default cover art SVG as base64 data URI
-  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAtNTAgNTAtNTAiIGZpbGw9IiM2NjY2NjYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yNSAxNWw2IDYtNiA2bTAgMTBsNiA2bS02LTYtNiA2IiBmaWxsPSIjNzc3ZjdmIi8+CjwvYXN2Zz4=`;
+  // Helper: default cover art SVG as base64 data URI (Speaker icon)
+  const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NjY2NjYyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXNwZWFrZXIiPjxwYXRoIGQ9Ik0yIDExaDIuNWwxLjUtMy41VjE2bDEuNS0zLjVINy41TDQgMTFoMCIvPjxwYXRoIGQ9Ik0xNyA4Yy45IDMuMi0uNyA2LjUtMy41IDguNCIvPjxwYXRoIGQ9Ik0yMCA1YzMuMiA2LjUgMy4yIDEzIDAgMTkuNSIvPjwvc3ZnPg==`;
+
+  // Global elements for message box
+  const messageBox = document.getElementById('message-box');
+  const messageBoxText = document.getElementById('message-box-text');
+  const messageBoxOkBtn = document.getElementById('message-box-ok-btn');
+
+  // Function to display custom messages
+  function showMessageBox(message) {
+      messageBoxText.textContent = message;
+      messageBox.style.display = 'block';
+  }
 
   // Set default UI text based on locale
   function updateLocaleTexts() {
@@ -1348,8 +1389,7 @@
       return false;
     } catch (error) {
       console.error('Error downloading and storing track:', error);
-      // alert(`${locale.downloadFailedAlert}`); // Use custom modal instead of alert
-      console.log(`${locale.downloadFailedAlert}`);
+      showMessageBox(locale.downloadFailedAlert);
       return false;
     }
   }
@@ -1383,8 +1423,7 @@
           return false;
       } catch (error) {
           console.error('Error deleting track from IndexedDB:', error);
-          // alert(`${locale.deleteFailedAlert}`); // Use custom modal instead of alert
-          console.log(`${locale.deleteFailedAlert}`);
+          showMessageBox(locale.deleteFailedAlert);
           return false;
       }
   }
@@ -1396,7 +1435,7 @@
     try {
       const db = await openIndexedDB();
       const transaction = db.transaction([IDB_STORE_NAME], 'readonly');
-      const store = transaction.objectStore(IDB_STORE_NAME);
+      const store = db.transaction([IDB_STORE_NAME], 'readonly').objectStore(IDB_STORE_NAME);
       
       return new Promise((resolve) => {
         const request = store.get(track.id); // Get directly by ID
@@ -1432,8 +1471,7 @@
   // Function to preload all tracks in the playlist
   async function preloadAllMusic() {
     if (playlist.length === 0) {
-        // alert(locale.noSongsInPlaylistToPreload); // Use custom modal instead of alert
-        console.log(locale.noSongsInPlaylistToPreload);
+        showMessageBox(locale.noSongsInPlaylistToPreload);
         return;
     }
 
@@ -1465,8 +1503,7 @@
     if (failedCount > 0) {
         message += ` ${failedCount} ${locale.failedToPreload}.`;
     }
-    // alert(message); // Use custom modal instead of alert
-    console.log(message);
+    showMessageBox(message);
   }
 
   // --- Playlist Persistence (LocalStorage) ---
@@ -1617,8 +1654,7 @@
             downloadBtn.textContent = '⏳';
             const success = await downloadAndStoreTrack(track);
             if (success) {
-                // alert(`"${track.title}" ${locale.downloadedAlert}`); // Use custom modal instead of alert
-                console.log(`"${track.title}" ${locale.downloadedAlert}`);
+                showMessageBox(`"${track.title}" ${locale.downloadedAlert}`);
             }
             downloadBtn.disabled = false;
             renderPlaylist(); // Re-render to update button state
@@ -1635,8 +1671,7 @@
             deleteDownloadBtn.disabled = true;
             const success = await deleteStoredTrack(track);
             if (success) {
-                // alert(`"${track.title}" ${locale.deleteDownloadedAlert}`); // Use custom modal instead of alert
-                console.log(`"${track.title}" ${locale.deleteDownloadedAlert}`);
+                showMessageBox(`"${track.title}" ${locale.deleteDownloadedAlert}`);
             }
             deleteDownloadBtn.disabled = false;
             renderPlaylist(); // Re-render to update button state
@@ -1752,11 +1787,9 @@
         console.error("Audio playback failed:", error);
         // More specific error message for autoplay
         if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
-          // alert(locale.autoplayBlocked); // Use custom modal instead of alert
-          console.log(locale.autoplayBlocked);
+          showMessageBox(locale.autoplayBlocked);
         } else {
-          // alert("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first."); // Use custom modal
-          console.log("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
+          showMessageBox("Failed to play track. Make sure your browser allows autoplay or try interacting with the page first.");
         }
       });
   }
@@ -1947,8 +1980,7 @@
   // Export playlist to JSON file
   function exportPlaylist() {
     if(playlist.length === 0) {
-      // alert(locale.noSongsInPlaylist); // Use custom modal instead of alert
-      console.log(locale.noSongsInPlaylist);
+      showMessageBox(locale.noSongsInPlaylist);
       return;
     }
     const exportablePlaylist = playlist.map(track => ({
@@ -2009,13 +2041,11 @@
           showTab('playlist-tab'); // Switch to playlist tab after importing
           renderLibraryList(currentFilter.type); // Update library list
         } else {
-          // alert(locale.importError); // Use custom modal instead of alert
-          console.log(locale.importError);
+          showMessageBox(locale.importError);
         }
       } catch (error) {
         console.error("Import playlist error:", error);
-        // alert(locale.importError); // Use custom modal instead of alert
-        console.log(locale.importError);
+        showMessageBox(locale.importError);
       }
     };
     reader.readAsText(file);
@@ -2025,8 +2055,7 @@
   function handleFilesFromInput(files) {
     const accepted = Array.from(files).filter(f => isSupportedFileType(f.name));
     if (accepted.length === 0) {
-      // alert(locale.fileNotSupported); // Use custom modal instead of alert
-      console.log(locale.fileNotSupported);
+      showMessageBox(locale.fileNotSupported);
       return;
     }
     accepted.forEach(file => {
@@ -2212,8 +2241,7 @@
     savePlaylist();
     renderPlaylist(); // Update playlist display
     renderLibraryList(currentFilter.type); // Update library display
-    // alert(locale.confirmEdit); // Use custom modal instead of alert
-    console.log(locale.confirmEdit);
+    showMessageBox(locale.confirmEdit);
     // If currently playing, update display immediately
     if (currentIndex === trackIndex) {
       currentSongTitleEl.textContent = playlist[currentIndex].title;
@@ -2556,6 +2584,11 @@
     audio.addEventListener('ended', playNext);
     audio.addEventListener('timeupdate', updateProgressBar); // Update progress bar
     progressBarContainer.addEventListener('click', seekAudio); // Seek functionality
+
+    // Event listener for message box OK button
+    messageBoxOkBtn.addEventListener('click', () => {
+        messageBox.style.display = 'none';
+    });
 
     audio.addEventListener('play', () => {
       isPlaying = true;
