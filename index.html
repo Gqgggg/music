@@ -439,7 +439,7 @@
       tracks: "tracks",
       failedToPreload: "failed to preload",
       noSongsInPlaylistToPreload: "No songs in playlist to preload.",
-      autoplayBlocked: "Autoplay blocked. Please tap play or select a song.", // New message for autoplay
+      autoplayBlocked: "Autoplay blocked. Please tap play or select a song.",
       // New headings
       playlistHeading: "Playlist",
       streamMusicHeading: "Stream Music",
@@ -481,7 +481,7 @@
       tracks: "canciones",
       failedToPreload: "fallaron al precargar",
       noSongsInPlaylistToPreload: "No hay canciones en la lista para precargar.",
-      autoplayBlocked: "Autoplay bloqueado. Toca reproducir o selecciona una canción.", // New message for autoplay
+      autoplayBlocked: "Autoplay bloqueado. Toca reproducir o selecciona una canción.",
 
       // New headings
       playlistHeading: "Lista de Reproducción",
@@ -500,7 +500,7 @@
       noTrack: "Aucune piste en cours",
       shuffle: "Activer le mode aléatoire",
       repeat: "Activer la répétition",
-      prevTrack: "Piste précédente",
+      prevTrack: "Piste precedente",
       nextTrack: "Piste suivante",
       playPause: "Lecture/Pause",
       playlist: "Liste de lecture",
@@ -524,7 +524,7 @@
       tracks: "pistes",
       failedToPreload: "n'ont pas pu être préchargées",
       noSongsInPlaylistToPreload: "Aucune chanson dans la playlist à précharger.",
-      autoplayBlocked: "Autoplay bloqué. Veuillez appuyer sur lecture ou sélectionner une chanson.", // New message for autoplay
+      autoplayBlocked: "Autoplay bloqué. Veuillez appuyer sur lecture ou sélectionner une chanson.",
 
       // New headings
       playlistHeading: "Liste de lecture",
@@ -567,7 +567,7 @@
       tracks: "Titel",
       failedToPreload: "konnten nicht vorgeladen werden",
       noSongsInPlaylistToPreload: "Keine Titel in der Playlist zum Vorladen.",
-      autoplayBlocked: "Autoplay blockiert. Bitte auf Play tippen oder einen Song auswählen.", // New message for autoplay
+      autoplayBlocked: "Autoplay blockiert. Bitte auf Play tippen oder einen Song auswählen.",
 
       // New headings
       playlistHeading: "Playlist",
@@ -613,7 +613,7 @@
 
   // Audio & state
   const audio = new Audio();
-  let playlist = [];
+  let playlist = []; // This will be loaded from localStorage
   let filteredPlaylist = [];
   let currentIndex = -1;
   let isPlaying = false;
@@ -626,6 +626,7 @@
   // IndexedDB Constants
   const IDB_DATABASE_NAME = 'music-db';
   const IDB_STORE_NAME = 'tracks';
+  const LOCAL_STORAGE_PLAYLIST_KEY = 'musicPlayerPlaylist'; // Key for localStorage
 
   // Helper: default cover art SVG as base64 data URI
   const defaultCoverArt = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDUwIDUwIiBmaWxsPSIjNjY2NjY2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI2NjY2NjYyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNiA2IiBzdHJva2U9IiM0MDQwNDAiIHN0cm9rZS13aWR0aD0iNSIvPgo8cGF0aCBkPSJNMjUgMTVsNiA2LTYgNm0wIDEwbDYgNm0tNi02LTYgNiIgZmlsbD0iIzc3N2Y3ZiIvPgo8L3N2Zz4=`;
@@ -749,6 +750,7 @@
         playlist[originalTrackIndex].offlineUrl = `indexeddb://${trackId}`;
         playlist[originalTrackIndex].isDownloaded = true;
         renderPlaylist();
+        savePlaylist(); // Save playlist after download status changes
         return true;
       }
       return false;
@@ -782,6 +784,7 @@
               delete playlist[originalTrackIndex].offlineUrl;
               playlist[originalTrackIndex].isDownloaded = false;
               renderPlaylist();
+              savePlaylist(); // Save playlist after download status changes
               return true;
           }
           return false;
@@ -806,6 +809,7 @@
         request.onsuccess = (event) => {
           const cursor = event.target.result;
           if (cursor) {
+            // Check if the originalUrl matches
             if (cursor.value.originalUrl === track.url) {
               track.offlineUrl = `indexeddb://${cursor.value.id}`;
               track.isDownloaded = true;
@@ -833,7 +837,7 @@
     for (const track of playlist) {
       await isTrackDownloaded(track);
     }
-    renderPlaylist();
+    renderPlaylist(); // Render after checking all statuses
   }
 
   // Function to preload all tracks in the playlist
@@ -872,6 +876,51 @@
         message += ` ${failedCount} ${locale.failedToPreload}.`;
     }
     alert(message);
+  }
+
+  // --- Playlist Persistence (LocalStorage) ---
+
+  // Save playlist to LocalStorage
+  function savePlaylist() {
+    try {
+      // We only save the necessary properties to keep the JSON size down
+      const simplePlaylist = playlist.map(track => ({
+        title: track.title,
+        artist: track.artist,
+        url: track.url,
+        cover: track.cover
+      }));
+      localStorage.setItem(LOCAL_STORAGE_PLAYLIST_KEY, JSON.stringify(simplePlaylist));
+      console.log('Playlist saved to LocalStorage.');
+    } catch (e) {
+      console.error('Error saving playlist to LocalStorage:', e);
+    }
+  }
+
+  // Load playlist from LocalStorage
+  function loadPlaylist() {
+    try {
+      const storedPlaylist = localStorage.getItem(LOCAL_STORAGE_PLAYLIST_KEY);
+      if (storedPlaylist) {
+        const loadedTracks = JSON.parse(storedPlaylist);
+        // Reconstruct the full track object, ensuring isDownloaded/offlineUrl are correctly re-evaluated
+        playlist = loadedTracks.map(t => ({
+            title: t.title || 'Unknown Title',
+            artist: t.artist || 'Unknown Artist',
+            url: t.url,
+            cover: t.cover || defaultCoverArt,
+            isDownloaded: false, // Will be updated by checkAllTracksDownloadStatus
+            offlineUrl: null     // Will be updated by checkAllTracksDownloadStatus
+        }));
+        console.log('Playlist loaded from LocalStorage.');
+      } else {
+        playlist = []; // Start with an empty playlist if nothing saved
+        console.log('No playlist found in LocalStorage.');
+      }
+    } catch (e) {
+      console.error('Error loading playlist from LocalStorage:', e);
+      playlist = []; // Fallback to empty playlist on error
+    }
   }
 
 
@@ -940,6 +989,8 @@
           if (success) {
               alert(`"${track.title}" ${locale.downloadedAlert}`);
           }
+          downloadBtn.disabled = false; // Re-enable regardless of success
+          renderPlaylist(); // Re-render to update button visibility
       });
       item.appendChild(downloadBtn);
 
@@ -955,6 +1006,8 @@
           if (success) {
               alert(`"${track.title}" ${locale.deleteDownloadedAlert}`);
           }
+          deleteBtn.disabled = false; // Re-enable regardless of success
+          renderPlaylist(); // Re-render to update button visibility
       });
       item.appendChild(deleteBtn);
 
@@ -1121,6 +1174,7 @@
     const existingIndex = playlist.findIndex(t => t.url === url);
     if (existingIndex === -1) {
         playlist.push(streamTrack);
+        savePlaylist(); // Save playlist after adding stream track
         playTrack(playlist.length - 1);
     } else {
         playTrack(existingIndex);
@@ -1176,9 +1230,9 @@
           audio.pause();
           audio.src = "";
           updateCoverArt(defaultCoverArt);
+          savePlaylist(); // Save imported playlist
           await checkAllTracksDownloadStatus(); // Check download status for imported tracks
           updatePlayPauseButton();
-          renderPlaylist(); // Render the newly imported playlist
         } else {
           alert(locale.importError);
         }
@@ -1199,8 +1253,12 @@
     }
     accepted.forEach(file => {
       const track = createTrackObject(file);
-      playlist.push(track);
+      // Prevent duplicates based on URL (important for local files too)
+      if (!playlist.some(t => t.url === track.url)) {
+        playlist.push(track);
+      }
     });
+    savePlaylist(); // Save playlist after adding new files
     checkAllTracksDownloadStatus(); // Re-render and check download status after adding new files
   }
 
@@ -1298,6 +1356,9 @@
 
   // Initialize
   function init() {
+    // 1. Load playlist from LocalStorage
+    loadPlaylist();
+
     // Event listeners
     playPauseBtn.addEventListener('click', togglePlayPause);
     prevBtn.addEventListener('click', playPrev);
@@ -1310,14 +1371,14 @@
     addMusicBtn.addEventListener('click', () => addMusicFileInput.click());
     addMusicFileInput.addEventListener('change', (e) => {
       handleFilesFromInput(e.target.files);
-      addMusicFileInput.value = '';
+      addMusicFileInput.value = ''; // Clear input to allow adding same file again
     });
 
     exportPlaylistBtn.addEventListener('click', exportPlaylist);
     importPlaylistBtn.addEventListener('click', () => importFileInput.click());
     importFileInput.addEventListener('change', e => {
       importPlaylistFromFile(e.target.files[0]);
-      importFileInput.value = '';
+      importFileInput.value = ''; // Clear input
     });
     mp3ConverterBtn.addEventListener('click', () => {
         window.open('https://www.freeconvert.com/mp3-converter', '_blank');
@@ -1358,6 +1419,7 @@
 
     updateCoverArt(defaultCoverArt);
     // Ensure playlist is rendered and download status checked before attempting autoplay
+    // This now happens AFTER loadPlaylist()
     checkAllTracksDownloadStatus().then(() => {
       if (playlist.length > 0) {
         // Attempt to autoplay the first track
