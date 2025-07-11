@@ -20,64 +20,109 @@
 
   :root {
     --primary-color: #ff6f61; /* Define a CSS variable for the primary color */
+    --background-dark: #121212;
+    --background-medium: #1e1e1e;
+    --background-light: #272727;
+    --text-color: #eee;
+    --text-muted: #aaa;
+    --border-color: #2a2a2a;
+    --shadow-color: rgba(0, 0, 0, 0.6);
   }
 
   body {
     margin: 0;
-    background-color: #121212;
-    color: #eee;
+    background-color: var(--background-dark);
+    color: var(--text-color);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
-    padding: 20px; /* Overall padding around the player */
+    align-items: center; /* Center vertically */
+    padding: 20px;
     min-height: 100vh;
+    overflow-y: auto; /* Allow scrolling if content is taller than viewport */
   }
 
   #player-container {
-    background: #1e1e1e;
-    width: 360px; /* Fixed width for consistency, could be max-width for responsiveness */
+    background: var(--background-medium);
+    width: 360px;
+    max-width: 100%; /* Ensure responsiveness on smaller screens */
     border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 10px 30px var(--shadow-color); /* Enhanced shadow */
     overflow: hidden;
     display: flex;
     flex-direction: column;
     user-select: none;
+    margin: auto; /* Center horizontally if max-width is hit */
   }
 
   /* Section Grouping Styles */
   .section-group {
-    padding: 15px 20px; /* Consistent padding for content sections */
+    padding: 15px 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Spacing between elements within a group */
-    border-top: 1px solid #2a2a2a; /* Subtle separation */
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
   }
 
   .section-group:first-of-type {
-    border-top: none; /* No top border for the very first group */
+    border-top: none;
   }
 
   .section-group h3 {
-    margin: 0 0 5px 0; /* Adjust heading margin */
+    margin: 0;
     color: var(--primary-color);
-    font-size: 1em;
+    font-size: 1.1em; /* Slightly larger heading */
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px; /* More prominent spacing */
+    padding-bottom: 5px; /* Space below heading */
   }
 
   /* Cover Art & Controls */
   #player-header {
-    background: #1e1e1e;
+    position: relative; /* For current song info overlay */
+    background: var(--background-medium);
   }
 
   #cover-art {
     width: 100%;
     aspect-ratio: 1/1;
     object-fit: cover;
-    border-radius: 0 0 0 0; /* Remove bottom radius as it's part of header */
-    box-shadow: inset 0 0 40px #0008;
-    margin-bottom: 0; /* Remove margin, handled by container */
+    display: block; /* Remove extra space below image */
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8); /* Darker inner shadow */
     background: #2a2a2a;
+  }
+
+  #current-song-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    padding: 20px 20px 10px 20px; /* More padding at bottom */
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  #player-header:hover #current-song-info {
+    opacity: 1; /* Show on hover */
+  }
+
+  #current-song-info .title {
+    font-size: 1.2em; /* Larger title */
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #current-song-info .artist {
+    font-size: 0.9em;
+    color: #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   #playback-controls {
@@ -86,8 +131,28 @@
     align-items: center;
     gap: 14px;
     padding: 15px 20px;
-    background: #272727;
-    border-top: 1px solid #333; /* Use border-top for separation from cover art */
+    background: var(--background-light); /* Slightly lighter for controls */
+    border-top: 1px solid var(--border-color);
+    position: relative; /* For progress bar positioning */
+  }
+
+  #progress-bar-container {
+    position: absolute;
+    top: 0; /* Position at the very top of the controls div */
+    left: 0;
+    width: 100%;
+    height: 6px; /* Slimmer progress bar */
+    background-color: #383838;
+    cursor: pointer;
+    border-radius: 3px 3px 0 0; /* Rounded top corners */
+  }
+
+  #progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: var(--primary-color);
+    border-radius: 3px 3px 0 0;
+    transition: width 0.1s linear; /* Smoother progress animation */
   }
 
   #playback-controls button {
@@ -96,19 +161,21 @@
     border-radius: 50%;
     width: 42px;
     height: 42px;
-    color: #eee;
+    color: var(--text-color);
     font-size: 18px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Add transform transition */
     display: flex;
     justify-content: center;
     align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Subtle button shadow */
   }
 
   #playback-controls button:hover,
   #playback-controls button:focus {
     background-color: var(--primary-color);
     outline: none;
+    transform: translateY(-2px); /* Slight lift on hover */
   }
 
   #play-pause-btn {
@@ -116,33 +183,34 @@
     height: 54px;
     font-size: 22px;
     background: var(--primary-color);
-    box-shadow: 0 0 10px var(--primary-color)aa;
+    box-shadow: 0 0 12px var(--primary-color)aa; /* More pronounced glow */
   }
 
   #play-pause-btn:hover,
   #play-pause-btn:focus {
     background: #ff4b3f;
-    box-shadow: 0 0 14px #ff4b3fcc;
+    box-shadow: 0 0 16px #ff4b3fcc;
+    transform: scale(1.05); /* Slightly larger on hover */
   }
 
   /* Main Features Section (Search & Playlist) */
   #main-features {
-    background: #121212;
-    padding-top: 15px; /* Separate from controls */
-    padding-bottom: 0; /* Playlist will handle its own padding */
+    background: var(--background-dark);
+    padding-top: 15px;
+    padding-bottom: 0;
   }
 
   #search-input {
-    width: calc(100% - 40px); /* 100% minus 2x horizontal padding */
-    margin: 0 20px 15px 20px; /* Top margin for separation, no bottom margin */
-    padding: 8px 12px;
-    border-radius: 8px;
+    width: calc(100% - 40px);
+    margin: 0 20px 15px 20px;
+    padding: 10px 15px; /* More padding */
+    border-radius: 10px; /* Slightly more rounded */
     border: none;
-    font-size: 14px;
-    background-color: #272727;
-    color: #eee;
+    font-size: 15px; /* Slightly larger font */
+    background-color: var(--background-light);
+    color: var(--text-color);
     outline: none;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   #search-input::placeholder {
@@ -151,16 +219,18 @@
 
   #search-input:focus {
     background-color: #3c3c3c;
+    box-shadow: 0 0 0 2px var(--primary-color); /* Focus ring */
   }
 
   #playlist {
-    max-height: 280px; /* Keep max height for scrolling */
+    max-height: 280px;
     overflow-y: auto;
-    background: #121212;
-    padding: 8px 0; /* Vertical padding */
+    background: var(--background-dark);
+    padding: 8px 0;
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) #2a2a2a;
-    border-top: 1px solid #2a2a2a; /* Separate from search */
+    border-top: 1px solid var(--border-color);
+    list-style: none; /* Remove default list bullets */
   }
 
   #playlist::-webkit-scrollbar {
@@ -176,34 +246,39 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 20px; /* Horizontal padding for items */
+    padding: 10px 20px;
     cursor: pointer;
-    transition: background-color 0.25s ease;
+    transition: background-color 0.25s ease, transform 0.1s ease;
     border-left: 4px solid transparent;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     user-select:none;
-    position: relative; /* Needed for absolute positioning of controls if desired, or for flex layout */
+    position: relative;
     padding-right: 120px; /* Make space for the new controls */
   }
 
   .playlist-item:hover {
     background-color: #272727;
+    transform: translateX(3px); /* Subtle slide on hover */
   }
 
   .playlist-item.active {
-    background-color: var(--primary-color);
-    border-left-color: #ff4433;
-    color: #fff;
+    background-color: rgba(var(--primary-color-rgb), 0.2); /* Semi-transparent primary */
+    border-left-color: var(--primary-color);
+    color: var(--text-color);
   }
+  
+  /* Calculate RGB for active state if needed, or use a fixed rgba */
+  /* This needs JS to set a --primary-color-rgb variable */
+
 
   .playlist-item img {
-    width: 36px;
-    height: 36px;
+    width: 40px; /* Slightly larger image */
+    height: 40px;
     object-fit: cover;
-    border-radius: 6px;
-    box-shadow: 0 0 6px #0005;
+    border-radius: 8px; /* More rounded corners */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4); /* Enhanced image shadow */
     flex-shrink: 0;
   }
 
@@ -212,6 +287,7 @@
     flex-direction: column;
     font-size: 14px;
     overflow: hidden;
+    flex-grow: 1; /* Allow title/artist to take available space */
   }
 
   .title-artist .title {
@@ -224,7 +300,7 @@
 
   .title-artist .artist {
     font-weight: 400;
-    color: #ccc;
+    color: var(--text-muted); /* Use muted text color */
     font-size: 12px;
     white-space: nowrap;
     overflow: hidden;
@@ -237,13 +313,14 @@
     margin-left: auto;
     background: none;
     border: none;
-    color: #eee;
+    color: var(--text-muted); /* Muted color */
     font-size: 1.2em;
     cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
+    opacity: 0.7; /* Slightly less opaque */
+    transition: opacity 0.2s ease, transform 0.2s ease;
     padding: 5px;
     border-radius: 4px;
+    flex-shrink: 0; /* Prevent shrinking */
   }
 
   .download-btn:hover,
@@ -251,64 +328,73 @@
   .delete-download-btn:hover,
   .delete-download-btn:focus {
     opacity: 1;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.15); /* Slightly brighter hover */
     outline: none;
+    transform: scale(1.1); /* Pop out slightly */
   }
 
   .delete-download-btn {
-    color: #f00;
+    color: #ff4b3f; /* Red for delete */
   }
 
   .download-btn:disabled,
   .delete-download-btn:disabled {
     cursor: not-allowed;
-    opacity: 0.5;
+    opacity: 0.3; /* More faded when disabled */
+    transform: none; /* No transform when disabled */
   }
 
   /* NEW: Playlist management buttons */
   .playlist-item-controls {
-      margin-left: auto; /* Push controls to the right */
       display: flex;
-      gap: 5px; /* Space between control buttons */
+      gap: 5px;
       align-items: center;
+      margin-left: 10px; /* Small margin to separate from download/delete */
+      flex-shrink: 0; /* Prevent shrinking */
   }
 
   .playlist-item-controls button {
       background: none;
       border: none;
-      color: #ccc;
+      color: var(--text-muted);
       font-size: 1em;
       cursor: pointer;
       opacity: 0.7;
       transition: opacity 0.2s ease, transform 0.2s ease;
       padding: 5px;
       border-radius: 4px;
-      display: flex; /* For perfect centering of icons */
+      display: flex;
       justify-content: center;
       align-items: center;
-      width: 30px; /* Small fixed width */
-      height: 30px; /* Small fixed height */
+      width: 30px;
+      height: 30px;
   }
 
   .playlist-item-controls button:hover {
       opacity: 1;
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.15);
       transform: scale(1.05);
   }
 
   .playlist-item-controls .remove-from-playlist-btn {
-      color: #ff6f61; /* A distinct color for removal */
+      color: #ff6f61;
   }
 
   .playlist-item-controls .remove-from-playlist-btn:hover {
-      background-color: rgba(255, 111, 97, 0.2);
+      background-color: rgba(255, 111, 97, 0.25);
+  }
+
+  .playlist-item-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+    transform: none;
   }
 
 
   /* Action Buttons & Inputs (General Styling) */
   .section-group input[type="url"],
   .section-group button {
-    width: 100%; /* Make them fill their section group */
+    width: 100%;
     padding: 10px;
     border: none;
     border-radius: 10px;
@@ -316,13 +402,15 @@
     color: white;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Button shadows */
   }
 
   .section-group input[type="url"] {
-    background-color: #272727; /* Override for input */
-    color: #eee;
+    background-color: var(--background-light);
+    color: var(--text-color);
     font-weight: normal;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Inset shadow for inputs */
   }
 
   .section-group input[type="url"]::placeholder {
@@ -331,12 +419,20 @@
 
   .section-group input[type="url"]:focus {
     background-color: #3c3c3c;
+    box-shadow: 0 0 0 2px var(--primary-color), inset 0 1px 3px rgba(0,0,0,0.3);
   }
 
   .section-group button:hover,
   .section-group button:focus {
     background-color: #ff4433;
     outline: none;
+    transform: translateY(-2px); /* Lift button on hover */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  }
+
+  .section-group button:active {
+    transform: translateY(0); /* Press effect */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
 
   /* Visualizer */
@@ -344,29 +440,30 @@
     width: 100%;
     height: 60px;
     background: #181818;
-    border-top: 1px solid #2a2a2a; /* Consistent border style */
+    border-top: 1px solid var(--border-color);
   }
 
   /* Settings Section */
   #settings-section {
     display: flex;
-    flex-direction: row; /* Layout language and color picker horizontally */
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    gap: 10px; /* Space between select and picker */
+    gap: 10px;
   }
 
   #lang-select,
   #theme-color-picker {
-    flex-grow: 1; /* Allow them to grow and fill space */
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: #272727;
+    flex-grow: 1;
+    padding: 8px 12px; /* More padding */
+    border-radius: 10px; /* More rounded */
+    background: var(--background-light);
     border: none;
-    color: #eee;
+    color: var(--text-color);
     font-size: 14px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
   }
 
   #lang-select:hover,
@@ -375,12 +472,99 @@
   #theme-color-picker:focus {
     background-color: #3c3c3c;
     outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color), inset 0 1px 3px rgba(0,0,0,0.3);
   }
+
+  #theme-color-picker {
+    width: 50px; /* Fixed width for color picker */
+    height: 38px; /* Adjust height to match select */
+    padding: 0;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    border: 1px solid var(--border-color); /* Add a border to picker */
+    overflow: hidden; /* Hide default color input style */
+  }
+
+  #theme-color-picker::-webkit-color-swatch-wrapper {
+      padding: 0;
+  }
+  #theme-color-picker::-webkit-color-swatch {
+      border: none;
+      border-radius: 8px; /* Match outer border radius */
+  }
+  #theme-color-picker::-moz-color-swatch,
+  #theme-color-picker::-moz-focus-inner {
+      border: none;
+      border-radius: 8px;
+  }
+
 
   /* Drag & Drop highlight */
   #player-container.dragover {
     border: 3px dashed var(--primary-color);
+    box-shadow: 0 0 20px rgba(var(--primary-color-rgb), 0.5); /* Glowing border */
   }
+
+  /* Media Queries for Responsiveness */
+  @media (max-width: 400px) {
+    body {
+      padding: 10px;
+    }
+    #player-container {
+      border-radius: 0; /* Full width on very small screens */
+      height: 100vh; /* Fill screen height on mobile */
+      width: 100%;
+    }
+    .section-group {
+      padding: 10px 15px;
+    }
+    #playback-controls {
+      gap: 10px;
+      padding: 10px 15px;
+    }
+    #playback-controls button {
+      width: 38px;
+      height: 38px;
+      font-size: 16px;
+    }
+    #play-pause-btn {
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+    }
+    #search-input {
+      width: calc(100% - 30px);
+      margin: 0 15px 10px 15px;
+    }
+    .playlist-item {
+      padding: 8px 15px;
+    }
+    .playlist-item img {
+      width: 32px;
+      height: 32px;
+    }
+    .title-artist .title {
+      font-size: 13px;
+    }
+    .title-artist .artist {
+      font-size: 11px;
+    }
+    .download-btn, .delete-download-btn, .playlist-item-controls button {
+        font-size: 1em;
+        width: 28px;
+        height: 28px;
+    }
+    #current-song-info .title {
+      font-size: 1.1em;
+    }
+    #current-song-info .artist {
+      font-size: 0.8em;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -388,9 +572,16 @@
 
   <div id="player-header">
     <img id="cover-art" src="" alt="No track playing" />
+    <div id="current-song-info">
+      <div class="title" id="current-song-title"></div>
+      <div class="artist" id="current-song-artist"></div>
+    </div>
   </div>
 
   <div id="playback-controls" role="region" aria-label="Playback controls">
+    <div id="progress-bar-container">
+      <div id="progress-bar"></div>
+    </div>
     <button id="prev-btn" aria-label="Previous track" tabindex="0">⏮</button>
     <button id="play-pause-btn" aria-label="Play/Pause" tabindex="0">▶️</button>
     <button id="next-btn" aria-label="Next track" tabindex="0">⏭</button>
@@ -643,6 +834,13 @@
   const mp3ConverterBtn = document.getElementById('mp3-converter-btn');
   const preloadAllBtn = document.getElementById('preload-all-btn');
 
+  // NEW UI Elements
+  const currentSongTitleEl = document.getElementById('current-song-title');
+  const currentSongArtistEl = document.getElementById('current-song-artist');
+  const progressBarContainer = document.getElementById('progress-bar-container');
+  const progressBar = document.getElementById('progress-bar');
+
+
   // New heading elements
   const playlistHeading = document.querySelector('#main-features h3');
   const streamMusicHeading = document.querySelector('#stream-section h3');
@@ -698,7 +896,11 @@
     toolsHeading.textContent = locale.toolsHeading;
     settingsHeading.textContent = locale.settingsHeading;
 
-    if(currentIndex === -1) coverArt.alt = locale.noTrack;
+    if(currentIndex === -1) {
+        coverArt.alt = locale.noTrack;
+        currentSongTitleEl.textContent = locale.noTrack;
+        currentSongArtistEl.textContent = '';
+    }
   }
 
   updateLocaleTexts();
@@ -1134,6 +1336,13 @@
     currentIndex = idx;
     const track = playlist[currentIndex];
     audio.src = urlToPlay || track.url;
+
+    // Update current song info display
+    currentSongTitleEl.textContent = track.title;
+    currentSongArtistEl.textContent = track.artist;
+    coverArt.alt = `Cover art for ${track.title} by ${track.artist}`;
+
+
     audio.play()
       .then(() => {
         isPlaying = true;
@@ -1227,7 +1436,7 @@
   // Update cover art
   function updateCoverArt(url) {
     coverArt.src = url || defaultCoverArt;
-    coverArt.alt = isPlaying && currentIndex !== -1 ? playlist[currentIndex].title : locale.noTrack;
+    // Alt text is handled in playTrack for now, but can be updated here for consistency
   }
 
   // Update active playlist item highlight
@@ -1325,6 +1534,9 @@
           savePlaylist(); // Save imported playlist
           await checkAllTracksDownloadStatus(); // Check download status for imported tracks
           updatePlayPauseButton();
+          currentSongTitleEl.textContent = locale.noTrack; // Reset current song info
+          currentSongArtistEl.textContent = '';
+          progressBar.style.width = '0%'; // Reset progress bar
         } else {
           alert(locale.importError);
         }
@@ -1481,6 +1693,9 @@
           pauseAudio(); // Pause playback
           currentIndex = -1; // No track selected
           updateCoverArt(defaultCoverArt);
+          currentSongTitleEl.textContent = locale.noTrack; // Reset current song info
+          currentSongArtistEl.textContent = '';
+          progressBar.style.width = '0%'; // Reset progress bar
           updatePlayPauseButton();
       } else if (currentIndex > indexToRemove) {
           currentIndex--; // Adjust current index if a track before it was removed
@@ -1490,6 +1705,29 @@
       renderPlaylist(); // Re-render to reflect removal
       updatePlaylistActive(); // Update active class (might be none)
       console.log(`Track "${removedTrack.title}" removed from playlist.`);
+  }
+
+  // Progress Bar Logic
+  function updateProgressBar() {
+    const progress = (audio.currentTime / audio.duration) * 100;
+    progressBar.style.width = `${progress || 0}%`;
+  }
+
+  function seekAudio(e) {
+    const rect = progressBarContainer.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const seekTime = (clickX / width) * audio.duration;
+    audio.currentTime = seekTime;
+  }
+
+  // Helper to convert hex to RGB for dynamic RGBA colors
+  function hexToRgb(hex) {
+      const bigint = parseInt(hex.slice(1), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r}, ${g}, ${b}`;
   }
 
 
@@ -1531,6 +1769,9 @@
     window.addEventListener('keydown', onKeyDown);
 
     audio.addEventListener('ended', playNext);
+    audio.addEventListener('timeupdate', updateProgressBar); // Update progress bar
+    progressBarContainer.addEventListener('click', seekAudio); // Seek functionality
+
     // audio.addEventListener('play') and 'pause' listeners now largely handled by playTrack promise
     audio.addEventListener('play', () => {
       isPlaying = true;
@@ -1552,9 +1793,15 @@
     });
 
     themeColorPicker.addEventListener('input', (e) => {
-      document.documentElement.style.setProperty('--primary-color', e.target.value);
-      updatePlaylistActive();
+      const newColor = e.target.value;
+      document.documentElement.style.setProperty('--primary-color', newColor);
+      // Set RGB variable for dynamic RGBA in CSS
+      document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(newColor));
+      updatePlaylistActive(); // Reapply active style with new color
     });
+    // Set initial RGB variable
+    document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(themeColorPicker.value));
+
 
     updateCoverArt(defaultCoverArt);
     // Ensure playlist is rendered and download status checked before attempting autoplay
@@ -1562,7 +1809,14 @@
     checkAllTracksDownloadStatus().then(() => {
       if (playlist.length > 0) {
         // Attempt to autoplay the first track
-        playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
+        // playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
+        // Better: just set the current song info and cover art for the first song without auto-playing
+        const firstTrack = playlist[0];
+        currentSongTitleEl.textContent = firstTrack.title;
+        currentSongArtistEl.textContent = firstTrack.artist;
+        updateCoverArt(firstTrack.cover);
+      } else {
+        updateLocaleTexts(); // Set "No track playing" if playlist is empty
       }
     });
 
