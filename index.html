@@ -27,6 +27,7 @@
     --text-muted: #aaa;
     --border-color: #2a2a2a;
     --shadow-color: rgba(0, 0, 0, 0.6);
+    --primary-color-rgb: 255, 111, 97; /* Default RGB for primary color */
   }
 
   body {
@@ -55,8 +56,8 @@
     margin: auto; /* Center horizontally if max-width is hit */
   }
 
-  /* Section Grouping Styles */
-  .section-group {
+  /* Section Grouping Styles - Renamed to features-group */
+  .features-group {
     padding: 15px 20px;
     display: flex;
     flex-direction: column;
@@ -64,11 +65,11 @@
     border-top: 1px solid var(--border-color);
   }
 
-  .section-group:first-of-type {
+  .features-group:first-of-type {
     border-top: none;
   }
 
-  .section-group h3 {
+  .features-group h3 {
     margin: 0;
     color: var(--primary-color);
     font-size: 1.1em; /* Slightly larger heading */
@@ -183,26 +184,64 @@
     height: 54px;
     font-size: 22px;
     background: var(--primary-color);
-    box-shadow: 0 0 12px var(--primary-color)aa; /* More pronounced glow */
+    box-shadow: 0 0 12px rgba(var(--primary-color-rgb), 0.6); /* More pronounced glow */
   }
 
   #play-pause-btn:hover,
   #play-pause-btn:focus {
     background: #ff4b3f;
-    box-shadow: 0 0 16px #ff4b3fcc;
+    box-shadow: 0 0 16px rgba(var(--primary-color-rgb), 0.8);
     transform: scale(1.05); /* Slightly larger on hover */
   }
 
-  /* Main Features Section (Search & Playlist) */
-  #main-features {
+  /* Tab Navigation */
+  #tab-navigation {
+    display: flex;
+    background: var(--background-light);
+    border-top: 1px solid var(--border-color);
+  }
+
+  #tab-navigation button {
+    flex: 1;
+    padding: 15px 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    border-bottom: 3px solid transparent;
+    outline: none;
+  }
+
+  #tab-navigation button.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background-color: var(--background-medium);
+  }
+
+  #tab-navigation button:hover:not(.active) {
+    color: var(--text-color);
+    background-color: #333;
+  }
+
+  /* Tab Content */
+  .tab-content {
+    display: none; /* Hidden by default */
     background: var(--background-dark);
-    padding-top: 15px;
-    padding-bottom: 0;
+    flex-grow: 1; /* Allow content to take available space */
+    min-height: 200px; /* Ensure a minimum height for tab content */
+  }
+
+  .tab-content.active {
+    display: flex; /* Show active tab */
+    flex-direction: column;
   }
 
   #search-input {
     width: calc(100% - 40px);
-    margin: 0 20px 15px 20px;
+    margin: 15px 20px 15px 20px; /* Added top margin */
     padding: 10px 15px; /* More padding */
     border-radius: 10px; /* Slightly more rounded */
     border: none;
@@ -223,14 +262,15 @@
   }
 
   #playlist {
-    max-height: 280px;
+    max-height: 280px; /* Still maintains height within tab */
     overflow-y: auto;
     background: var(--background-dark);
     padding: 8px 0;
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) #2a2a2a;
-    border-top: 1px solid var(--border-color);
+    border-top: none; /* No border top within tab content */
     list-style: none; /* Remove default list bullets */
+    flex-grow: 1; /* Allow playlist to take remaining height */
   }
 
   #playlist::-webkit-scrollbar {
@@ -268,9 +308,6 @@
     border-left-color: var(--primary-color);
     color: var(--text-color);
   }
-  
-  /* Calculate RGB for active state if needed, or use a fixed rgba */
-  /* This needs JS to set a --primary-color-rgb variable */
 
 
   .playlist-item img {
@@ -344,7 +381,7 @@
     transform: none; /* No transform when disabled */
   }
 
-  /* NEW: Playlist management buttons */
+  /* Playlist management buttons */
   .playlist-item-controls {
       display: flex;
       gap: 5px;
@@ -392,8 +429,8 @@
 
 
   /* Action Buttons & Inputs (General Styling) */
-  .section-group input[type="url"],
-  .section-group button {
+  .features-group input[type="url"],
+  .features-group button {
     width: 100%;
     padding: 10px;
     border: none;
@@ -406,31 +443,31 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Button shadows */
   }
 
-  .section-group input[type="url"] {
+  .features-group input[type="url"] {
     background-color: var(--background-light);
     color: var(--text-color);
     font-weight: normal;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Inset shadow for inputs */
   }
 
-  .section-group input[type="url"]::placeholder {
+  .features-group input[type="url"]::placeholder {
     color: #777;
   }
 
-  .section-group input[type="url"]:focus {
+  .features-group input[type="url"]:focus {
     background-color: #3c3c3c;
     box-shadow: 0 0 0 2px var(--primary-color), inset 0 1px 3px rgba(0,0,0,0.3);
   }
 
-  .section-group button:hover,
-  .section-group button:focus {
+  .features-group button:hover,
+  .features-group button:focus {
     background-color: #ff4433;
     outline: none;
     transform: translateY(-2px); /* Lift button on hover */
     box-shadow: 0 4px 10px rgba(0,0,0,0.4);
   }
 
-  .section-group button:active {
+  .features-group button:active {
     transform: translateY(0); /* Press effect */
     box-shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
@@ -518,7 +555,7 @@
       height: 100vh; /* Fill screen height on mobile */
       width: 100%;
     }
-    .section-group {
+    .features-group {
       padding: 10px 15px;
     }
     #playback-controls {
@@ -537,7 +574,7 @@
     }
     #search-input {
       width: calc(100% - 30px);
-      margin: 0 15px 10px 15px;
+      margin: 10px 15px; /* Adjusted margin */
     }
     .playlist-item {
       padding: 8px 15px;
@@ -562,6 +599,10 @@
     }
     #current-song-info .artist {
       font-size: 0.8em;
+    }
+    #tab-navigation button {
+        font-size: 1em;
+        padding: 12px 0;
     }
   }
 
@@ -589,20 +630,19 @@
     <button id="repeat-btn" aria-pressed="false" aria-label="Repeat toggle" tabindex="0">🔁</button>
   </div>
 
-  <div id="main-features" class="section-group">
-    <h3>Playlist</h3>
-    <input id="search-input" type="search" placeholder="Search songs..." aria-label="Search songs" />
-    <ul id="playlist" role="list" tabindex="0" aria-label="Playlist"></ul>
+  <div id="tab-navigation" role="tablist" aria-label="Music Player Tabs">
+    <button id="music-tab-btn" role="tab" aria-selected="true" aria-controls="music-tab-content" tabindex="0">Music</button>
+    <button id="playlist-tab-btn" role="tab" aria-selected="false" aria-controls="playlist-tab-content" tabindex="-1">Playlist</button>
   </div>
 
-  <div id="action-buttons-group">
-    <div id="stream-section" class="section-group">
+  <div id="music-tab-content" class="tab-content active" role="tabpanel" aria-labelledby="music-tab-btn">
+    <div id="stream-section" class="features-group">
       <h3>Stream Music</h3>
       <input id="stream-url-input" type="url" placeholder="Enter streaming URL (mp3/aac)" aria-label="Streaming URL" />
       <button id="play-stream-btn" aria-label="Play stream from URL">Play Stream</button>
     </div>
 
-    <div id="file-management-section" class="section-group">
+    <div id="file-management-section" class="features-group">
       <h3>File Management</h3>
       <button id="add-music-btn" aria-label="Add songs from device">Add Songs from Device</button>
       <input type="file" id="add-music-file-input" accept="audio/*" multiple hidden />
@@ -612,16 +652,21 @@
       <input type="file" id="import-file-input" accept=".json" hidden />
     </div>
 
-    <div id="tools-section" class="section-group">
+    <div id="tools-section" class="features-group">
       <h3>Tools</h3>
       <button id="preload-all-btn" aria-label="Preload all music">Preload All Music</button>
       <button id="mp3-converter-btn" aria-label="Go to MP3 Converter">Go to MP3 Converter</button>
     </div>
   </div>
 
+  <div id="playlist-tab-content" class="tab-content" role="tabpanel" aria-labelledby="playlist-tab-btn" style="display: none;">
+    <input id="search-input" type="search" placeholder="Search songs..." aria-label="Search songs" />
+    <ul id="playlist" role="list" tabindex="0" aria-label="Playlist"></ul>
+  </div>
+
   <canvas id="visualizer" aria-hidden="true"></canvas>
 
-  <div id="settings-section" class="section-group">
+  <div id="settings-section" class="features-group">
     <h3>Settings</h3>
     <select id="lang-select" aria-label="Select language">
       <option value="en" selected>English</option>
@@ -673,8 +718,9 @@
       failedToPreload: "failed to preload",
       noSongsInPlaylistToPreload: "No songs in playlist to preload.",
       autoplayBlocked: "Autoplay blocked. Please tap play or select a song.",
-      // New headings
-      playlistHeading: "Playlist",
+      // Headings
+      musicTab: "Music", // New
+      playlistTab: "Playlist", // New
       streamMusicHeading: "Stream Music",
       fileManagementHeading: "File Management",
       toolsHeading: "Tools",
@@ -715,9 +761,9 @@
       failedToPreload: "fallaron al precargar",
       noSongsInPlaylistToPreload: "No hay canciones en la lista para precargar.",
       autoplayBlocked: "Autoplay bloqueado. Toca reproducir o selecciona una canción.",
-
-      // New headings
-      playlistHeading: "Lista de Reproducción",
+      // Headings
+      musicTab: "Música",
+      playlistTab: "Lista de Reproducción",
       streamMusicHeading: "Reproducir Música",
       fileManagementHeading: "Gestión de Archivos",
       toolsHeading: "Herramientas",
@@ -759,8 +805,9 @@
       noSongsInPlaylistToPreload: "Aucune chanson dans la playlist à précharger.",
       autoplayBlocked: "Autoplay bloqué. Veuillez appuyer sur lecture ou sélectionner une chanson.",
 
-      // New headings
-      playlistHeading: "Liste de lecture",
+      // Headings
+      musicTab: "Musique",
+      playlistTab: "Liste de lecture",
       streamMusicHeading: "Diffuser de la musique",
       fileManagementHeading: "Gestion des fichiers",
       toolsHeading: "Outils",
@@ -802,8 +849,9 @@
       noSongsInPlaylistToPreload: "Keine Titel in der Playlist zum Vorladen.",
       autoplayBlocked: "Autoplay blockiert. Bitte auf Play tippen oder einen Song auswählen.",
 
-      // New headings
-      playlistHeading: "Playlist",
+      // Headings
+      musicTab: "Musik",
+      playlistTab: "Playlist",
       streamMusicHeading: "Musik streamen",
       fileManagementHeading: "Dateiverwaltung",
       toolsHeading: "Werkzeuge",
@@ -834,18 +882,21 @@
   const mp3ConverterBtn = document.getElementById('mp3-converter-btn');
   const preloadAllBtn = document.getElementById('preload-all-btn');
 
-  // NEW UI Elements
   const currentSongTitleEl = document.getElementById('current-song-title');
   const currentSongArtistEl = document.getElementById('current-song-artist');
   const progressBarContainer = document.getElementById('progress-bar-container');
   const progressBar = document.getElementById('progress-bar');
 
+  // New Tab Elements
+  const musicTabBtn = document.getElementById('music-tab-btn');
+  const playlistTabBtn = document.getElementById('playlist-tab-btn');
+  const musicTabContent = document.getElementById('music-tab-content');
+  const playlistTabContent = document.getElementById('playlist-tab-content');
 
-  // New heading elements
-  const playlistHeading = document.querySelector('#main-features h3');
-  const streamMusicHeading = document.querySelector('#stream-section h3');
-  const fileManagementHeading = document.querySelector('#file-management-section h3');
-  const toolsHeading = document.querySelector('#tools-section h3');
+  // Heading elements (now nested differently)
+  const streamMusicHeading = musicTabContent.querySelector('#stream-section h3');
+  const fileManagementHeading = musicTabContent.querySelector('#file-management-section h3');
+  const toolsHeading = musicTabContent.querySelector('#tools-section h3');
   const settingsHeading = document.querySelector('#settings-section h3');
 
 
@@ -890,7 +941,8 @@
     preloadAllBtn.textContent = locale.preloadAllMusic;
 
     // Update section headings
-    playlistHeading.textContent = locale.playlistHeading;
+    musicTabBtn.textContent = locale.musicTab;
+    playlistTabBtn.textContent = locale.playlistTab;
     streamMusicHeading.textContent = locale.streamMusicHeading;
     fileManagementHeading.textContent = locale.fileManagementHeading;
     toolsHeading.textContent = locale.toolsHeading;
@@ -977,7 +1029,7 @@
       const transaction = db.transaction([IDB_STORE_NAME], 'readwrite');
       const store = transaction.objectStore(IDB_STORE_NAME);
 
-      const dataToStore = {
+      await store.add({
         id: trackId,
         title: track.title,
         artist: track.artist,
@@ -985,9 +1037,7 @@
         audioBlob: audioBlob,
         mimeType: mimeType,
         cover: track.cover || defaultCoverArt,
-      };
-
-      await store.add(dataToStore);
+      });
 
       const originalTrackIndex = playlist.findIndex(t => t.url === track.url);
       if (originalTrackIndex !== -1) {
@@ -1186,6 +1236,7 @@
       emptyMsg.textContent = locale.noSongsInPlaylist;
       emptyMsg.style.padding = '10px 20px';
       emptyMsg.style.color = '#777';
+      emptyMsg.style.textAlign = 'center'; /* Center the message */
       playlistEl.appendChild(emptyMsg);
       return;
     }
@@ -1480,6 +1531,7 @@
     } else {
         playTrack(existingIndex);
     }
+    showTab('playlist-tab'); // Switch to playlist tab after playing stream
   }
 
   // Export playlist to JSON file
@@ -1537,6 +1589,7 @@
           currentSongTitleEl.textContent = locale.noTrack; // Reset current song info
           currentSongArtistEl.textContent = '';
           progressBar.style.width = '0%'; // Reset progress bar
+          showTab('playlist-tab'); // Switch to playlist tab after importing
         } else {
           alert(locale.importError);
         }
@@ -1564,6 +1617,7 @@
     });
     savePlaylist(); // Save playlist after adding new files
     checkAllTracksDownloadStatus(); // Re-render and check download status after adding new files
+    showTab('playlist-tab'); // Switch to playlist tab after adding songs
   }
 
   // Drag & drop handlers for files
@@ -1583,6 +1637,7 @@
 
   // Keyboard shortcuts
   function onKeyDown(e) {
+    // Only apply shortcuts if focus is not on an input/select
     if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
     switch(e.key.toLowerCase()) {
@@ -1658,7 +1713,7 @@
     }
   });
 
-  // NEW: Playlist editing functions
+  // Playlist editing functions
   function moveTrackInPlaylist(oldIndex, newIndex) {
       if (newIndex < 0 || newIndex >= playlist.length || oldIndex === newIndex) {
           return; // Invalid move
@@ -1730,6 +1785,32 @@
       return `${r}, ${g}, ${b}`;
   }
 
+  // NEW: Tab Switching Logic
+  function showTab(tabId) {
+    // Deactivate all tabs and content
+    document.querySelectorAll('#tab-navigation button').forEach(btn => {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected', 'false');
+      btn.setAttribute('tabindex', '-1');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+      content.style.display = 'none';
+    });
+
+    // Activate the selected tab and content
+    const selectedTabBtn = document.getElementById(tabId + '-btn');
+    const selectedTabContent = document.getElementById(tabId + '-content');
+
+    if (selectedTabBtn && selectedTabContent) {
+      selectedTabBtn.classList.add('active');
+      selectedTabBtn.setAttribute('aria-selected', 'true');
+      selectedTabBtn.setAttribute('tabindex', '0');
+      selectedTabContent.classList.add('active');
+      selectedTabContent.style.display = 'flex'; // Use flex for column layout
+    }
+  }
+
 
   // Initialize
   function init() {
@@ -1742,7 +1823,7 @@
     nextBtn.addEventListener('click', playNext);
     shuffleBtn.addEventListener('click', toggleShuffle);
     repeatBtn.addEventListener('click', toggleRepeat);
-    searchInput.addEventListener('input', renderPlaylist);
+    searchInput.addEventListener('input', renderPlaylist); // Still needed for playlist tab
     playStreamBtn.addEventListener('click', playStream);
 
     addMusicBtn.addEventListener('click', () => addMusicFileInput.click());
@@ -1772,7 +1853,6 @@
     audio.addEventListener('timeupdate', updateProgressBar); // Update progress bar
     progressBarContainer.addEventListener('click', seekAudio); // Seek functionality
 
-    // audio.addEventListener('play') and 'pause' listeners now largely handled by playTrack promise
     audio.addEventListener('play', () => {
       isPlaying = true;
       updatePlayPauseButton();
@@ -1789,7 +1869,7 @@
       const val = langSelect.value;
       locale = locales[val] || locales.en;
       updateLocaleTexts();
-      renderPlaylist();
+      renderPlaylist(); // Rerender playlist as text might change
     });
 
     themeColorPicker.addEventListener('input', (e) => {
@@ -1798,19 +1878,19 @@
       // Set RGB variable for dynamic RGBA in CSS
       document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(newColor));
       updatePlaylistActive(); // Reapply active style with new color
+      // Also update scrollbar color if it uses primary-color directly
+      document.documentElement.style.setProperty('scrollbar-color', `var(--primary-color) #2a2a2a`);
     });
-    // Set initial RGB variable
+    // Set initial RGB variable and scrollbar color
     document.documentElement.style.setProperty('--primary-color-rgb', hexToRgb(themeColorPicker.value));
+    document.documentElement.style.setProperty('scrollbar-color', `var(--primary-color) #2a2a2a`);
 
 
     updateCoverArt(defaultCoverArt);
     // Ensure playlist is rendered and download status checked before attempting autoplay
-    // This now happens AFTER loadPlaylist()
     checkAllTracksDownloadStatus().then(() => {
       if (playlist.length > 0) {
-        // Attempt to autoplay the first track
-        // playTrack(0, playlist[0].isDownloaded ? playlist[0].offlineUrl : playlist[0].url);
-        // Better: just set the current song info and cover art for the first song without auto-playing
+        // Just show the info for the first song without auto-playing if not already playing
         const firstTrack = playlist[0];
         currentSongTitleEl.textContent = firstTrack.title;
         currentSongArtistEl.textContent = firstTrack.artist;
@@ -1818,9 +1898,17 @@
       } else {
         updateLocaleTexts(); // Set "No track playing" if playlist is empty
       }
+      renderPlaylist(); // Ensure playlist is rendered initially
     });
 
     setupVisualizer();
+
+    // Tab button event listeners
+    musicTabBtn.addEventListener('click', () => showTab('music-tab'));
+    playlistTabBtn.addEventListener('click', () => showTab('playlist-tab'));
+
+    // Set initial active tab
+    showTab('playlist-tab'); // Default to showing the playlist tab
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
