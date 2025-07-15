@@ -701,6 +701,44 @@
     box-shadow: 0 0 20px rgba(var(--primary-color-rgb), 0.5); /* Glowing border */
   }
 
+  /* Loading Indicator Styles */
+  #loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent overlay */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of other content */
+    color: var(--text-color);
+    font-size: 1.2em;
+    backdrop-filter: blur(5px); /* Optional: adds a blur effect */
+  }
+
+  #loading-indicator.hidden {
+    display: none;
+  }
+
+  .spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite; /* Spin animation */
+    margin-bottom: 10px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+
   /* Media Queries for Responsiveness */
   @media (max-width: 400px) {
     body {
@@ -907,6 +945,12 @@
         margin-top: 15px;
         transition: background-color 0.2s ease;
     ">OK</button>
+</div>
+
+<!-- Loading Indicator HTML -->
+<div id="loading-indicator" class="hidden">
+  <div class="spinner"></div>
+  <p>Loading track...</p>
 </div>
 
 <script>
@@ -1210,6 +1254,9 @@
   const toolsHeading = libraryTabContent.querySelector('#tools-section h3');
   const settingsHeading = document.querySelector('#settings-section h3');
 
+  // Loading Indicator Element
+  const loadingIndicator = document.getElementById('loading-indicator');
+
 
   let locale = locales.en;
 
@@ -1249,6 +1296,15 @@
   function showMessageBox(message) {
       messageBoxText.textContent = message;
       messageBox.style.display = 'block';
+  }
+
+  // Helper functions for loading indicator
+  function showLoadingIndicator() {
+    loadingIndicator.classList.remove('hidden');
+  }
+
+  function hideLoadingIndicator() {
+    loadingIndicator.classList.add('hidden');
   }
 
   // Set default UI text based on locale
@@ -1766,7 +1822,11 @@
 
     currentIndex = idx;
     const track = playlist[currentIndex];
+
+    showLoadingIndicator(); // Show indicator as soon as a new track is selected
+
     audio.src = urlToPlay || track.url;
+    audio.load(); // This is crucial for 'waiting' and 'canplaythrough' to fire
 
     // Update current song info display
     currentSongTitleEl.textContent = track.title;
@@ -1780,11 +1840,13 @@
         updatePlayPauseButton();
         updateCoverArt(track.cover);
         updatePlaylistActive();
+        hideLoadingIndicator(); // Hide on successful play
       })
       .catch((error) => {
         isPlaying = false; // Ensure UI reflects paused state
         updatePlayPauseButton();
         console.error("Audio playback failed:", error);
+        hideLoadingIndicator(); // Hide on error
         // More specific error message for autoplay
         if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
           showMessageBox(locale.autoplayBlocked);
@@ -2588,6 +2650,23 @@
     // Event listener for message box OK button
     messageBoxOkBtn.addEventListener('click', () => {
         messageBox.style.display = 'none';
+    });
+
+    // Audio loading events for loading indicator
+    audio.addEventListener('waiting', () => {
+      showLoadingIndicator();
+      console.log('Audio is buffering/waiting...');
+    });
+
+    audio.addEventListener('canplaythrough', () => {
+      hideLoadingIndicator();
+      console.log('Audio can play through.');
+    });
+
+    audio.addEventListener('error', (e) => {
+      hideLoadingIndicator();
+      console.error('Error loading audio:', e);
+      showMessageBox('Failed to load audio. Please check the URL or file.');
     });
 
     audio.addEventListener('play', () => {
